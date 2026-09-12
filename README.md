@@ -28,6 +28,32 @@ Default login (change `SEED_USER_PASSWORD` in `backend/.env` before seeding if y
 - Email: `hpbandara94@gmail.com`
 - Password: `password`
 
+## Deploying (Neon + Render + Vercel)
+
+Dev uses Docker Compose with a local Postgres container; production uses **Neon** (Postgres), **Render** (Laravel API), and **Vercel** (frontend static build) — three separate free-tier services, not this same docker-compose stack.
+
+### 1. Database — Neon
+
+Create a project at [neon.tech](https://neon.tech), then copy its connection string (starts `postgresql://...?sslmode=require`) — you'll paste it as `DB_URL` in Render below.
+
+### 2. Backend API — Render
+
+This repo includes `render.yaml` and `backend/Dockerfile.render` (a single-container nginx+PHP-FPM image — Render runs one container per service, unlike the two-container dev setup).
+
+1. On [render.com](https://render.com), **New → Blueprint**, connect this GitHub repo. Render reads `render.yaml` automatically and creates the `babymonitor-api` web service.
+2. Fill in the env vars marked "generate/set in dashboard" in `render.yaml`:
+   - `APP_KEY` — generate one locally: `docker compose exec backend php artisan key:generate --show` (copy the `base64:...` output — don't reuse the dev one).
+   - `APP_URL` — Render gives you the service URL after first deploy (`https://babymonitor-api-xxxx.onrender.com`); update this var and redeploy once you know it.
+   - `DB_URL` — the Neon connection string from step 1.
+   - `FRONTEND_URL` / `SANCTUM_STATEFUL_DOMAINS` — your Vercel URL once deployed (step 3). Leave blank for the first deploy; login won't work cross-origin until these are set correctly, so come back and fill these in.
+   - `SEED_USER_EMAIL` / `SEED_USER_PASSWORD` — your real login for production (not the dev default).
+3. Deploy runs migrations automatically on every container start (`backend/docker/render/entrypoint.sh`). Seeding is a manual one-time step — after the first successful deploy, open Render's **Shell** tab for the service and run `php artisan db:seed`.
+4. Free tier spins the service down after ~15 minutes idle; the first request after that takes 30–60s to wake it back up. Fine for a personal app, just don't be alarmed by the first cold load.
+
+### 3. Frontend — Vercel
+
+Not wired up yet — when ready: import the repo into Vercel, set the project root to `frontend/`, and set `VITE_API_URL` to the Render URL from step 2.
+
 ## How data flows
 
 - All 7 trackers (feeding, sleep, diaper, temperature, growth, medication, symptom) live under `/api/babies/{baby}/{tracker}`.
