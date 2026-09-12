@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: babymonitor
+      POSTGRES_USER: babymonitor
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U babymonitor"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    working_dir: /var/www
+    volumes:
+      - ./backend:/var/www
+      - backend_vendor:/var/www/vendor
+    expose:
+      - "9000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "composer install --no-interaction && php artisan config:clear && php artisan migrate --force && php-fpm"
+
+  webserver:
+    image: nginx:alpine
+    volumes:
+      - ./backend:/var/www
+      - backend_vendor:/var/www/vendor
+      - ./backend/docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      - backend
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  frontend_node_modules:
+  backend_vendor:
