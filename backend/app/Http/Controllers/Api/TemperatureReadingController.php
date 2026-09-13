@@ -17,7 +17,7 @@ class TemperatureReadingController extends BabyScopedApiController
     {
         $this->ensureOwnsBaby($request, $baby);
 
-        $query = $baby->temperatureReadings()->orderByDesc('measured_at');
+        $query = $baby->temperatureReadings()->with('creator')->orderByDesc('measured_at');
 
         if ($request->filled('from')) {
             $query->where('measured_at', '>=', $request->date('from'));
@@ -34,6 +34,7 @@ class TemperatureReadingController extends BabyScopedApiController
         $this->ensureOwnsBaby($request, $baby);
 
         $data = $request->validated();
+        $data['created_by'] = $request->user()->id;
 
         $duplicate = $this->findPossibleDuplicate(
             $baby->temperatureReadings()->where('client_uuid', '!=', $data['client_uuid']),
@@ -45,6 +46,7 @@ class TemperatureReadingController extends BabyScopedApiController
             ['client_uuid' => $data['client_uuid']],
             $data
         );
+        $reading->setRelation('creator', $request->user());
 
         if ($duplicate) {
             $reading->possible_duplicate_of = $duplicate->id;

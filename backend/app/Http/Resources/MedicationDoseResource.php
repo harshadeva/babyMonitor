@@ -17,6 +17,9 @@ class MedicationDoseResource extends JsonResource
             'name' => $this->name,
             'dose' => $this->dose,
             'notes' => $this->notes,
+            'created_at' => $this->created_at?->toIso8601String(),
+            'created_by' => $this->created_by,
+            'created_by_name' => $this->whenLoaded('creator', fn () => $this->creator?->name),
         ];
     }
 }

@@ -28,7 +28,12 @@ Default login (change `SEED_USER_PASSWORD` in `backend/.env` before seeding if y
 - Email: `hpbandara94@gmail.com`
 - Password: `password`
 
-A second, separate account + baby is also seeded for testing/poking around, so it never touches the real data above (override via `SEED_TEST_USER_EMAIL`/`SEED_TEST_USER_PASSWORD`):
+A second caregiver account is also seeded, sharing access to the **same** baby above (e.g. the other parent — override via `SEED_CO_PARENT_EMAIL`/`SEED_CO_PARENT_PASSWORD`):
+
+- Email: `vishmanthi@gmail.com`
+- Password: `password`
+
+A third, fully separate account + baby is seeded for testing/poking around, so it never touches the real data above (override via `SEED_TEST_USER_EMAIL`/`SEED_TEST_USER_PASSWORD`):
 
 - Email: `test@example.com`
 - Password: `password`
@@ -77,4 +82,8 @@ If `curl http://localhost:8000/up` works but the app's login always fails in Chr
 
 ## What's intentionally out of v1
 
-Hardware/sensor integration, multi-caregiver accounts, automated alerts beyond the two clinical flags above, pattern/correlation analysis, PDF export. The data model (structured, quantified fields) is built so these can be added later without re-collecting data.
+Hardware/sensor integration, automated alerts beyond the two clinical flags above, pattern/correlation analysis, PDF export. The data model (structured, quantified fields) is built so these can be added later without re-collecting data.
+
+## Multi-caregiver
+
+A baby can have more than one caregiver (e.g. both parents) sharing the same records — `baby_user` is a pivot table, and every tracker row stores `created_by` so the app can show who logged it. Both parents' devices show and edit the exact same data; nothing is duplicated per-caregiver.

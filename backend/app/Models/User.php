@@ -5,7 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -50,10 +50,12 @@ class User extends Authenticatable
     }
 
     /**
-     * @return HasMany<Baby, $this>
+     * Babies this user can view/log for — shared between caregivers (e.g. both parents).
+     *
+     * @return BelongsToMany<Baby, $this>
      */
-    public function babies(): HasMany
+    public function babies(): BelongsToMany
     {
-        return $this->hasMany(Baby::class);
+        return $this->belongsToMany(Baby::class)->withTimestamps();
     }
 }

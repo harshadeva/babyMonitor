@@ -22,6 +22,9 @@ class DiaperChangeResource extends JsonResource
             'stool_consistency' => $this->stool_consistency?->value,
             'flagged_for_doctor' => $this->flagged_for_doctor,
             'notes' => $this->notes,
+            'created_at' => $this->created_at?->toIso8601String(),
+            'created_by' => $this->created_by,
+            'created_by_name' => $this->whenLoaded('creator', fn () => $this->creator?->name),
             'possible_duplicate_of' => $this->when(isset($this->possible_duplicate_of), $this->possible_duplicate_of),
         ];
     }

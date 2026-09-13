@@ -15,7 +15,7 @@ class MedicationDoseController extends BabyScopedApiController
         $this->ensureOwnsBaby($request, $baby);
 
         return MedicationDoseResource::collection(
-            $baby->medicationDoses()->orderByDesc('given_at')->paginate(50)
+            $baby->medicationDoses()->with('creator')->orderByDesc('given_at')->paginate(50)
         );
     }
 
@@ -24,11 +24,13 @@ class MedicationDoseController extends BabyScopedApiController
         $this->ensureOwnsBaby($request, $baby);
 
         $data = $request->validated();
+        $data['created_by'] = $request->user()->id;
 
         $dose = $baby->medicationDoses()->updateOrCreate(
             ['client_uuid' => $data['client_uuid']],
             $data
         );
+        $dose->setRelation('creator', $request->user());
 
         return new MedicationDoseResource($dose);
     }

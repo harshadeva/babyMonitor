@@ -16,6 +16,9 @@ class SymptomLogResource extends JsonResource
             'occurred_at' => $this->occurred_at?->toIso8601String(),
             'tag' => $this->tag->value,
             'notes' => $this->notes,
+            'created_at' => $this->created_at?->toIso8601String(),
+            'created_by' => $this->created_by,
+            'created_by_name' => $this->whenLoaded('creator', fn () => $this->creator?->name),
         ];
     }
 }

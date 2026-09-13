@@ -11,19 +11,19 @@ use Illuminate\Http\Request;
 abstract class BabyScopedApiController extends Controller
 {
     /**
-     * Guard against acting on a baby that isn't the authenticated user's.
+     * Guard against acting on a baby the authenticated user isn't a caregiver for.
      */
     protected function ensureOwnsBaby(Request $request, Baby $baby): void
     {
-        abort_unless($baby->user_id === $request->user()->id, 404);
+        abort_unless($baby->users()->whereKey($request->user()->id)->exists(), 404);
     }
 
     /**
-     * Guard against acting on a record whose baby isn't the authenticated user's.
+     * Guard against acting on a record whose baby the authenticated user isn't a caregiver for.
      */
     protected function ensureOwnsRecord(Request $request, Model $record): void
     {
-        abort_unless($record->baby->user_id === $request->user()->id, 404);
+        $this->ensureOwnsBaby($request, $record->baby);
     }
 
     /**

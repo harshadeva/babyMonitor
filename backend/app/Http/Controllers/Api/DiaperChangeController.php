@@ -27,7 +27,7 @@ class DiaperChangeController extends BabyScopedApiController
     {
         $this->ensureOwnsBaby($request, $baby);
 
-        $query = $baby->diaperChanges()->orderByDesc('occurred_at');
+        $query = $baby->diaperChanges()->with('creator')->orderByDesc('occurred_at');
 
         if ($request->filled('from')) {
             $query->where('occurred_at', '>=', $request->date('from'));
@@ -45,6 +45,7 @@ class DiaperChangeController extends BabyScopedApiController
 
         $data = $request->validated();
         $data['flagged_for_doctor'] = $this->isAlarmColor($baby, $data['stool_color_name'] ?? null);
+        $data['created_by'] = $request->user()->id;
 
         $duplicate = $this->findPossibleDuplicate(
             $baby->diaperChanges()->where('client_uuid', '!=', $data['client_uuid']),
@@ -56,6 +57,7 @@ class DiaperChangeController extends BabyScopedApiController
             ['client_uuid' => $data['client_uuid']],
             $data
         );
+        $diaper->setRelation('creator', $request->user());
 
         if ($duplicate) {
             $diaper->possible_duplicate_of = $duplicate->id;

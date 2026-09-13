@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+import RemarkField from '@/components/RemarkField.vue'
 import TimeAdjuster from '@/components/TimeAdjuster.vue'
 import { useEntryLogger } from '@/composables/useEntryLogger'
 import { getSetting, setSetting } from '@/offline/db'
@@ -11,6 +12,7 @@ const { submit, isSubmitting } = useEntryLogger('sleeps')
 
 const active = ref(null)
 const endTime = ref(new Date())
+const notes = ref('')
 
 // "Log a sleep that already happened" — for when it's logged from memory, after the fact.
 const loggingPast = ref(false)
@@ -37,6 +39,7 @@ async function endSleep() {
   const result = await submit(props.babyId, {
     started_at: active.value.started_at,
     ended_at: endTime.value.toISOString(),
+    notes: notes.value || null,
   })
   await setSetting('active_sleep', null)
   emit('saved', result)
@@ -66,6 +69,7 @@ async function logPastSleep() {
   const result = await submit(props.babyId, {
     started_at: pastStart.value.toISOString(),
     ended_at: pastEnd.value.toISOString(),
+    notes: notes.value || null,
   })
   loggingPast.value = false
   emit('saved', result)
@@ -77,6 +81,7 @@ async function logPastSleep() {
     <template v-if="active">
       <p class="muted">Asleep since {{ new Date(active.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</p>
       <TimeAdjuster v-model="endTime" label="Ended" />
+      <RemarkField v-model="notes" />
       <button class="btn btn-primary btn-block" :disabled="isSubmitting" @click="endSleep">
         {{ isSubmitting ? 'Saving…' : 'Wake up / end sleep' }}
       </button>
@@ -101,6 +106,8 @@ async function logPastSleep() {
 
       <TimeAdjuster v-if="!stillAsleep" v-model="pastEnd" label="Woke up" />
       <p v-else class="muted" style="margin-bottom: 16px;">We'll show this as an ongoing nap until you log the wake-up time.</p>
+
+      <RemarkField v-if="!stillAsleep" v-model="notes" />
 
       <button class="btn btn-primary btn-block" style="margin-bottom: 10px;" :disabled="isSubmitting" @click="logPastSleep">
         {{ isSubmitting ? 'Saving…' : stillAsleep ? 'Save (still sleeping)' : 'Save sleep' }}

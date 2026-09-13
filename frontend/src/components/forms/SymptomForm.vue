@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import RemarkField from '@/components/RemarkField.vue'
 import TimeAdjuster from '@/components/TimeAdjuster.vue'
 import { SYMPTOM_TAGS } from '@/constants/options'
 import { useEntryLogger } from '@/composables/useEntryLogger'
@@ -40,10 +41,7 @@ async function save() {
         </div>
       </div>
     </div>
-    <div class="field">
-      <label>Notes (optional)</label>
-      <textarea v-model="notes" rows="2" placeholder="Anything else worth noting" />
-    </div>
+    <RemarkField v-model="notes" />
 
     <TimeAdjuster v-model="when" />
 

@@ -11,6 +11,7 @@ class DiaperChange extends Model
 {
     protected $fillable = [
         'baby_id',
+        'created_by',
         'client_uuid',
         'occurred_at',
         'product',
@@ -38,5 +39,10 @@ class DiaperChange extends Model
     public function baby(): BelongsTo
     {
         return $this->belongsTo(Baby::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

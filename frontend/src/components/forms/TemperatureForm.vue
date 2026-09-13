@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import RemarkField from '@/components/RemarkField.vue'
 import TimeAdjuster from '@/components/TimeAdjuster.vue'
 import { TEMPERATURE_METHODS } from '@/constants/options'
 import { useEntryLogger } from '@/composables/useEntryLogger'
@@ -14,6 +15,7 @@ const unit = ref('C')
 const method = ref('armpit')
 const when = ref(new Date())
 const valueC = ref(36.5)
+const notes = ref('')
 
 onMounted(async () => {
   unit.value = await getSetting('temp_unit', 'C')
@@ -40,6 +42,7 @@ async function save() {
     measured_at: when.value.toISOString(),
     value_celsius: valueC.value,
     method: method.value,
+    notes: notes.value || null,
   })
   emit('saved', result)
 }
@@ -69,6 +72,7 @@ async function save() {
     </div>
 
     <TimeAdjuster v-model="when" />
+    <RemarkField v-model="notes" />
 
     <button class="btn btn-primary btn-block" :disabled="isSubmitting" @click="save">
       {{ isSubmitting ? 'Saving…' : 'Log temperature' }}

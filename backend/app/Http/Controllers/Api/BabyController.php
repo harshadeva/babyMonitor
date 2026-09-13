@@ -18,7 +18,11 @@ class BabyController extends BabyScopedApiController
 
     public function store(StoreBabyRequest $request)
     {
-        $baby = $request->user()->babies()->create($request->validated());
+        $baby = Baby::create([
+            ...$request->validated(),
+            'user_id' => $request->user()->id,
+        ]);
+        $baby->users()->attach($request->user()->id);
 
         return new BabyResource($baby);
     }

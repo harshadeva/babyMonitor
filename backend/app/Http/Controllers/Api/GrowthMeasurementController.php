@@ -15,7 +15,7 @@ class GrowthMeasurementController extends BabyScopedApiController
         $this->ensureOwnsBaby($request, $baby);
 
         return GrowthMeasurementResource::collection(
-            $baby->growthMeasurements()->orderByDesc('measured_at')->paginate(50)
+            $baby->growthMeasurements()->with('creator')->orderByDesc('measured_at')->paginate(50)
         );
     }
 
@@ -24,11 +24,13 @@ class GrowthMeasurementController extends BabyScopedApiController
         $this->ensureOwnsBaby($request, $baby);
 
         $data = $request->validated();
+        $data['created_by'] = $request->user()->id;
 
         $measurement = $baby->growthMeasurements()->updateOrCreate(
             ['client_uuid' => $data['client_uuid']],
             $data
         );
+        $measurement->setRelation('creator', $request->user());
 
         return new GrowthMeasurementResource($measurement);
     }

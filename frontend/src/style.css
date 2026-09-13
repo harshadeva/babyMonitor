@@ -187,6 +187,44 @@ input, select, textarea {
   color: var(--color-text);
 }
 
+.remark-field {
+  margin-bottom: 16px;
+}
+
+.remark-toggle {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-style: italic;
+  text-align: left;
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remark-field-open label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.remark-hide {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .segmented {
   display: flex;
   gap: 8px;
@@ -506,6 +544,7 @@ input, select, textarea {
   gap: 12px;
   padding: 12px 4px;
   border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
 }
 
 .history-row:last-child {
@@ -619,6 +658,125 @@ input, select, textarea {
 .confirm-actions .btn {
   flex: 1;
   min-height: 52px;
+}
+
+.detail-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(74, 59, 54, 0.5);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.detail-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  max-width: 420px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 32px rgba(74, 59, 54, 0.2);
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.detail-icon {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.detail-title {
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.detail-time {
+  font-size: 14px;
+  color: var(--color-text);
+  margin-top: 2px;
+}
+
+.detail-close {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-surface-soft);
+  color: var(--color-text-muted);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.detail-rows {
+  border-top: 1px solid var(--color-border);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px;
+}
+
+.detail-row-label {
+  color: var(--color-text-muted);
+}
+
+.detail-row-value {
+  font-weight: 600;
+  text-align: right;
+}
+
+.detail-remark {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+}
+
+.detail-remark-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.detail-remark-text {
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.detail-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--color-border);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-align: center;
 }
 
 .pill {

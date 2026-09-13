@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import RemarkField from '@/components/RemarkField.vue'
 import TimeAdjuster from '@/components/TimeAdjuster.vue'
 import { COMMON_MEDICATIONS } from '@/constants/options'
 import { useEntryLogger } from '@/composables/useEntryLogger'
@@ -13,12 +14,14 @@ const when = ref(new Date())
 const name = ref(COMMON_MEDICATIONS[0])
 const customName = ref('')
 const dose = ref('')
+const notes = ref('')
 
 async function save() {
   const result = await submit(props.babyId, {
     given_at: when.value.toISOString(),
     name: name.value === '__custom' ? customName.value : name.value,
     dose: dose.value || null,
+    notes: notes.value || null,
   })
   emit('saved', result)
 }
@@ -43,6 +46,7 @@ async function save() {
     </div>
 
     <TimeAdjuster v-model="when" />
+    <RemarkField v-model="notes" />
 
     <button class="btn btn-primary btn-block" :disabled="isSubmitting" @click="save">
       {{ isSubmitting ? 'Saving…' : 'Log dose' }}

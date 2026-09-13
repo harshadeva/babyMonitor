@@ -9,6 +9,7 @@ class SleepSession extends Model
 {
     protected $fillable = [
         'baby_id',
+        'created_by',
         'client_uuid',
         'started_at',
         'ended_at',
@@ -26,5 +27,10 @@ class SleepSession extends Model
     public function baby(): BelongsTo
     {
         return $this->belongsTo(Baby::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

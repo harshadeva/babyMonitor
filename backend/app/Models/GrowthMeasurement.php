@@ -9,6 +9,7 @@ class GrowthMeasurement extends Model
 {
     protected $fillable = [
         'baby_id',
+        'created_by',
         'client_uuid',
         'measured_at',
         'weight_grams',
@@ -29,5 +30,10 @@ class GrowthMeasurement extends Model
     public function baby(): BelongsTo
     {
         return $this->belongsTo(Baby::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

@@ -121,7 +121,7 @@ onMounted(async () => {
       </div>
       <div class="card" style="margin-bottom: 16px;">
         <h3 style="margin-top:0;">Diapers per day</h3>
-        <Bar :data="diaperData" :options="{ ...chartOptions, scales: { x: { stacked: true }, y: { stacked: true } } }" />
+        <Bar :data="diaperData" :options="chartOptions" />
       </div>
       <div class="card" style="margin-bottom: 16px;">
         <h3 style="margin-top:0;">Temperature readings</h3>

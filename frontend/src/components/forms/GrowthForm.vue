@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import RemarkField from '@/components/RemarkField.vue'
 import TimeAdjuster from '@/components/TimeAdjuster.vue'
 import { useEntryLogger } from '@/composables/useEntryLogger'
 
@@ -12,6 +13,7 @@ const when = ref(new Date())
 const weightGrams = ref(null)
 const lengthCm = ref(null)
 const headCm = ref(null)
+const notes = ref('')
 
 async function save() {
   const result = await submit(props.babyId, {
@@ -19,6 +21,7 @@ async function save() {
     weight_grams: weightGrams.value || null,
     length_cm: lengthCm.value || null,
     head_circumference_cm: headCm.value || null,
+    notes: notes.value || null,
   })
   emit('saved', result)
 }
@@ -40,6 +43,7 @@ async function save() {
     </div>
 
     <TimeAdjuster v-model="when" />
+    <RemarkField v-model="notes" />
 
     <button class="btn btn-primary btn-block" :disabled="isSubmitting" @click="save">
       {{ isSubmitting ? 'Saving…' : 'Log measurement' }}

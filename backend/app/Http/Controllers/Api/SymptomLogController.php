@@ -15,7 +15,7 @@ class SymptomLogController extends BabyScopedApiController
         $this->ensureOwnsBaby($request, $baby);
 
         return SymptomLogResource::collection(
-            $baby->symptomLogs()->orderByDesc('occurred_at')->paginate(50)
+            $baby->symptomLogs()->with('creator')->orderByDesc('occurred_at')->paginate(50)
         );
     }
 
@@ -24,11 +24,13 @@ class SymptomLogController extends BabyScopedApiController
         $this->ensureOwnsBaby($request, $baby);
 
         $data = $request->validated();
+        $data['created_by'] = $request->user()->id;
 
         $log = $baby->symptomLogs()->updateOrCreate(
             ['client_uuid' => $data['client_uuid']],
             $data
         );
+        $log->setRelation('creator', $request->user());
 
         return new SymptomLogResource($log);
     }

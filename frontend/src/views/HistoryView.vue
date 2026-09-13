@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import HistoryDetailModal from '@/components/HistoryDetailModal.vue'
 import { apiClient } from '@/api/client'
 import { useBabyStore } from '@/stores/baby'
 import { TRACKERS } from '@/constants/trackers'
@@ -9,6 +10,7 @@ const babyStore = useBabyStore()
 const loading = ref(true)
 const items = ref([])
 const pendingDelete = ref(null)
+const selectedItem = ref(null)
 
 // All types shown by default; tapping a chip narrows the list down to it.
 const filters = reactive(Object.fromEntries(Object.keys(TRACKERS).map((k) => [k, true])))
@@ -110,12 +112,17 @@ async function load() {
         at: row[TRACKERS[entity].time],
         summary: summarize(entity, row),
         flagged: row.flagged_for_doctor || false,
+        raw: row,
       })
     }
   }
   merged.sort((a, b) => new Date(b.at) - new Date(a.at))
   items.value = merged
   loading.value = false
+}
+
+function openDetail(item) {
+  selectedItem.value = item
 }
 
 function askDelete(item) {
@@ -175,7 +182,7 @@ const isOnline = computed(() => navigator.onLine)
       <div v-for="group in groupedItems" :key="group.key" class="history-day-group">
         <div class="history-day-header">{{ group.label }}</div>
         <div class="card" style="padding: 4px 12px;">
-          <div v-for="item in group.items" :key="item.entity + item.id" class="history-row">
+          <div v-for="item in group.items" :key="item.entity + item.id" class="history-row" @click="openDetail(item)">
             <div class="history-icon" :style="{ background: TRACKERS[item.entity].color + '2e' }">
               {{ TRACKERS[item.entity].emoji }}
             </div>
@@ -188,7 +195,7 @@ const isOnline = computed(() => navigator.onLine)
             </div>
             <div class="history-row-meta">
               <div class="history-row-time">{{ new Date(item.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</div>
-              <button type="button" class="history-delete-btn" aria-label="Delete entry" @click="askDelete(item)">🗑️</button>
+              <button type="button" class="history-delete-btn" aria-label="Delete entry" @click.stop="askDelete(item)">🗑️</button>
             </div>
           </div>
         </div>
@@ -201,6 +208,12 @@ const isOnline = computed(() => navigator.onLine)
       :message="`${TRACKERS[pendingDelete.entity].label} · ${pendingDelete.summary}`"
       @confirm="confirmDeleteEntry"
       @cancel="cancelDelete"
+    />
+
+    <HistoryDetailModal
+      v-if="selectedItem"
+      :item="selectedItem"
+      @close="selectedItem = null"
     />
   </div>
 </template>

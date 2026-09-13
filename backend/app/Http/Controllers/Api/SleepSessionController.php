@@ -14,7 +14,7 @@ class SleepSessionController extends BabyScopedApiController
     {
         $this->ensureOwnsBaby($request, $baby);
 
-        $query = $baby->sleepSessions()->orderByDesc('started_at');
+        $query = $baby->sleepSessions()->with('creator')->orderByDesc('started_at');
 
         if ($request->filled('from')) {
             $query->where('started_at', '>=', $request->date('from'));
@@ -31,6 +31,7 @@ class SleepSessionController extends BabyScopedApiController
         $this->ensureOwnsBaby($request, $baby);
 
         $data = $request->validated();
+        $data['created_by'] = $request->user()->id;
 
         $duplicate = $this->findPossibleDuplicate(
             $baby->sleepSessions()->where('client_uuid', '!=', $data['client_uuid']),
@@ -42,6 +43,7 @@ class SleepSessionController extends BabyScopedApiController
             ['client_uuid' => $data['client_uuid']],
             $data
         );
+        $sleep->setRelation('creator', $request->user());
 
         if ($duplicate) {
             $sleep->possible_duplicate_of = $duplicate->id;

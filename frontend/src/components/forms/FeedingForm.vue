@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+import RemarkField from '@/components/RemarkField.vue'
 import TimeAdjuster from '@/components/TimeAdjuster.vue'
 import { useEntryLogger } from '@/composables/useEntryLogger'
 import { getSetting, setSetting } from '@/offline/db'
@@ -16,6 +17,7 @@ const volume = ref(30)
 const contents = ref('formula')
 const endTime = ref(new Date())
 const bottleTime = ref(new Date())
+const notes = ref('')
 
 // "Log a feed that already happened" — for when it's logged from memory, after the fact.
 const loggingPast = ref(false)
@@ -43,6 +45,7 @@ async function endBreastFeed() {
     side: active.value.side,
     started_at: active.value.started_at,
     ended_at: endTime.value.toISOString(),
+    notes: notes.value || null,
   })
   await setSetting('active_feeding', null)
   emit('saved', result)
@@ -60,6 +63,7 @@ async function logPastBreastFeed() {
     side: side.value,
     started_at: pastStart.value.toISOString(),
     ended_at: pastEnd.value.toISOString(),
+    notes: notes.value || null,
   })
   loggingPast.value = false
   emit('saved', result)
@@ -72,6 +76,7 @@ async function logBottle() {
     contents: contents.value,
     started_at: bottleTime.value.toISOString(),
     ended_at: bottleTime.value.toISOString(),
+    notes: notes.value || null,
   })
   emit('saved', result)
 }
@@ -82,6 +87,7 @@ async function logBottle() {
     <template v-if="active">
       <p class="muted">Breastfeeding started at {{ new Date(active.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} · side: {{ active.side }}</p>
       <TimeAdjuster v-model="endTime" label="Ended" />
+      <RemarkField v-model="notes" />
       <button class="btn btn-primary btn-block" :disabled="isSubmitting" @click="endBreastFeed">
         {{ isSubmitting ? 'Saving…' : 'End feeding' }}
       </button>
@@ -111,6 +117,7 @@ async function logBottle() {
         <template v-else>
           <TimeAdjuster v-model="pastStart" label="Started" />
           <TimeAdjuster v-model="pastEnd" label="Ended" />
+          <RemarkField v-model="notes" />
           <button class="btn btn-primary btn-block" style="margin-bottom: 10px;" :disabled="isSubmitting" @click="logPastBreastFeed">
             {{ isSubmitting ? 'Saving…' : 'Save feed' }}
           </button>
@@ -131,6 +138,7 @@ async function logBottle() {
           <input v-model.number="volume" type="number" min="0" max="500" step="5" />
         </div>
         <TimeAdjuster v-model="bottleTime" />
+        <RemarkField v-model="notes" />
         <button class="btn btn-primary btn-block" :disabled="isSubmitting" @click="logBottle">
           {{ isSubmitting ? 'Saving…' : 'Log bottle feed' }}
         </button>

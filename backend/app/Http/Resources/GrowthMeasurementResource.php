@@ -18,6 +18,9 @@ class GrowthMeasurementResource extends JsonResource
             'length_cm' => $this->length_cm !== null ? (float) $this->length_cm : null,
             'head_circumference_cm' => $this->head_circumference_cm !== null ? (float) $this->head_circumference_cm : null,
             'notes' => $this->notes,
+            'created_at' => $this->created_at?->toIso8601String(),
+            'created_by' => $this->created_by,
+            'created_by_name' => $this->whenLoaded('creator', fn () => $this->creator?->name),
         ];
     }
 }

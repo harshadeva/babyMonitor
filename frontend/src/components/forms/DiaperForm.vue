@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+import RemarkField from '@/components/RemarkField.vue'
 import TimeAdjuster from '@/components/TimeAdjuster.vue'
 import { STOOL_COLORS, STOOL_CONSISTENCIES } from '@/constants/options'
 import { useEntryLogger } from '@/composables/useEntryLogger'
@@ -18,6 +19,7 @@ const selectedColor = ref(STOOL_COLORS[3]) // mustard yellow — the common heal
 const customHex = ref('#6b4423')
 const useCustomColor = ref(false)
 const consistency = ref(null)
+const notes = ref('')
 
 onMounted(async () => {
   product.value = await getSetting('last_diaper_product', 'disposable')
@@ -42,6 +44,7 @@ async function save() {
     stool_color_name: dirty.value ? colorName : null,
     stool_color_hex: dirty.value ? colorHex : null,
     stool_consistency: dirty.value ? consistency.value : null,
+    notes: notes.value || null,
   })
   emit('saved', result)
 }
@@ -97,6 +100,7 @@ async function save() {
     </template>
 
     <TimeAdjuster v-model="when" />
+    <RemarkField v-model="notes" />
 
     <button class="btn btn-primary btn-block" :disabled="isSubmitting" @click="save">
       {{ isSubmitting ? 'Saving…' : 'Log diaper change' }}
