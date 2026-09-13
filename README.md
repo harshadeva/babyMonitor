@@ -14,7 +14,7 @@ Fast, offline-friendly newborn tracking. Laravel API (Postgres) + Vue 3 PWA fron
 docker compose up --build
 ```
 
-- Frontend (PWA): http://localhost:5173
+- Frontend (PWA): http://localhost:5174 (not the Vite default 5173 — kept free in case another project on your machine is already using it)
 - Backend API: http://localhost:8000
 
 First time only — seed a login and a baby record:

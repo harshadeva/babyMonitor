@@ -1,4 +1,5 @@
 import Dexie from 'dexie'
+import { DEFAULT_REMINDERS } from '@/constants/reminders'
 
 export const db = new Dexie('baby-monitor')
 
@@ -37,4 +38,16 @@ export async function getSetting(key, fallback = null) {
 
 export async function setSetting(key, value) {
   await db.settings.put({ key, value })
+}
+
+export async function getReminderSettings() {
+  const stored = await getSetting('reminder_settings', {})
+  return { ...DEFAULT_REMINDERS, ...stored }
+}
+
+export async function setReminderSetting(trackerKey, patch) {
+  const current = await getReminderSettings()
+  current[trackerKey] = { ...current[trackerKey], ...patch }
+  await setSetting('reminder_settings', current)
+  return current
 }

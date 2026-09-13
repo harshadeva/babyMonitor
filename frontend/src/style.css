@@ -261,6 +261,23 @@ input, select, textarea {
   font-variant-numeric: tabular-nums;
 }
 
+.quick-btn.overdue {
+  border-color: var(--color-warning);
+  background: var(--color-warning-bg);
+}
+
+.quick-btn.overdue .sub {
+  color: var(--color-warning);
+  font-weight: 700;
+}
+
+.overdue-dot {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 16px;
+}
+
 .live-dot {
   position: absolute;
   top: 14px;
@@ -726,4 +743,95 @@ input, select, textarea {
   border: none;
   opacity: 0;
   cursor: pointer;
+}
+
+.toggle-switch {
+  width: 52px;
+  height: 30px;
+  border-radius: 999px;
+  border: none;
+  background: var(--color-border);
+  position: relative;
+  cursor: pointer;
+  padding: 3px;
+  flex: 0 0 auto;
+}
+
+.toggle-switch.on {
+  background: var(--color-primary);
+}
+
+.toggle-knob {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(74, 59, 54, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.toggle-switch.on .toggle-knob {
+  transform: translateX(22px);
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.settings-row-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-row-title {
+  font-weight: 700;
+}
+
+.settings-hours-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.settings-hours-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.settings-hours-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  min-width: 84px;
+}
+
+.settings-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 20px 4px 8px;
+}
+
+.settings-section-title:first-child {
+  margin-top: 0;
 }

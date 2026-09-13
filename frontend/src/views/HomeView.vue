@@ -10,7 +10,7 @@ import MedicationForm from '@/components/forms/MedicationForm.vue'
 import SymptomForm from '@/components/forms/SymptomForm.vue'
 import { apiClient } from '@/api/client'
 import { useBabyStore } from '@/stores/baby'
-import { getSetting } from '@/offline/db'
+import { getSetting, getReminderSettings } from '@/offline/db'
 import { TRACKERS } from '@/constants/trackers'
 
 const babyStore = useBabyStore()
@@ -18,6 +18,7 @@ const activeSheet = ref(null)
 const toast = ref(null)
 const activeFeeding = ref(null)
 const activeSleep = ref(null)
+const reminderSettings = ref({})
 
 const FORM_COMPONENTS = {
   feedings: FeedingForm,
@@ -78,6 +79,21 @@ function isLive(tracker) {
   )
 }
 
+function entryTimestamp(tracker) {
+  const entry = lastEntries[tracker.key]
+  return entry ? entry.started_at || entry.occurred_at || entry.measured_at || entry.given_at : null
+}
+
+function isOverdue(tracker) {
+  if (isLive(tracker)) return false // an ongoing session isn't "overdue"
+  const setting = reminderSettings.value[tracker.key]
+  if (!setting?.enabled) return false
+  const at = entryTimestamp(tracker)
+  if (!at) return false
+  const elapsedHours = (now.value - new Date(at).getTime()) / 3_600_000
+  return elapsedHours > setting.hours
+}
+
 function subCaption(tracker) {
   if (tracker.key === 'feedings' && activeFeeding.value) {
     return `Feeding · ${elapsedLabel(activeFeeding.value.started_at)}`
@@ -85,15 +101,16 @@ function subCaption(tracker) {
   if (tracker.key === 'sleeps' && activeSleep.value) {
     return `Asleep · ${elapsedLabel(activeSleep.value.started_at)}`
   }
-  const entry = lastEntries[tracker.key]
-  if (!entry) return 'No entries yet'
-  const at = entry.started_at || entry.occurred_at || entry.measured_at || entry.given_at
-  return `Last: ${relativeTime(at)}`
+  const at = entryTimestamp(tracker)
+  if (!at) return 'No entries yet'
+  const label = `Last: ${relativeTime(at)}`
+  return isOverdue(tracker) ? `⏰ ${label}` : label
 }
 
 async function refreshState() {
   activeFeeding.value = await getSetting('active_feeding')
   activeSleep.value = await getSetting('active_sleep')
+  reminderSettings.value = await getReminderSettings()
 }
 
 async function loadLastEntries() {
@@ -162,10 +179,11 @@ async function onSaved(result) {
         v-for="t in trackers"
         :key="t.key"
         class="quick-btn"
-        :class="{ live: isLive(t) }"
+        :class="{ live: isLive(t), overdue: isOverdue(t) }"
         @click="openSheet(t.key)"
       >
         <span v-if="isLive(t)" class="live-dot" aria-hidden="true"></span>
+        <span v-else-if="isOverdue(t)" class="overdue-dot" aria-hidden="true">⏰</span>
         <span class="emoji">{{ t.emoji }}</span>
         <span>{{ t.label }}</span>
         <span class="sub">{{ subCaption(t) }}</span>

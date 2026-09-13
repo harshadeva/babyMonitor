@@ -46,6 +46,7 @@ onMounted(async () => {
         <router-link to="/">🏠<br />Log</router-link>
         <router-link to="/history">🕘<br />History</router-link>
         <router-link to="/charts">📈<br />Charts</router-link>
+        <router-link to="/settings">⚙️<br />Settings</router-link>
       </div>
     </nav>
   </div>
