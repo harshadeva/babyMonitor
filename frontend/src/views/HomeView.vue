@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import FeedingForm from '@/components/forms/FeedingForm.vue'
 import SleepForm from '@/components/forms/SleepForm.vue'
@@ -32,6 +32,18 @@ const lastEntries = reactive({})
 
 const activeTracker = computed(() => trackers.find((t) => t.key === activeSheet.value))
 
+// Ticks every second so active-session tiles show a live-updating elapsed time.
+const now = ref(Date.now())
+let tickInterval = null
+onMounted(() => {
+  tickInterval = setInterval(() => {
+    now.value = Date.now()
+  }, 1000)
+})
+onUnmounted(() => {
+  if (tickInterval) clearInterval(tickInterval)
+})
+
 function relativeTime(iso) {
   if (!iso) return null
   const diffMin = Math.round((Date.now() - new Date(iso).getTime()) / 60_000)
@@ -42,9 +54,30 @@ function relativeTime(iso) {
   return `${Math.floor(hours / 24)}d ago`
 }
 
+function elapsedLabel(startedAtIso) {
+  const totalSeconds = Math.max(0, Math.floor((now.value - new Date(startedAtIso).getTime()) / 1000))
+  const h = Math.floor(totalSeconds / 3600)
+  const m = Math.floor((totalSeconds % 3600) / 60)
+  const s = totalSeconds % 60
+  if (h > 0) return `${h}h ${m}m`
+  if (m > 0) return `${m}m ${s}s`
+  return `${s}s`
+}
+
+function isLive(tracker) {
+  return (
+    (tracker.key === 'feedings' && !!activeFeeding.value) ||
+    (tracker.key === 'sleeps' && !!activeSleep.value)
+  )
+}
+
 function subCaption(tracker) {
-  if (tracker.key === 'feedings' && activeFeeding.value) return 'Feeding now…'
-  if (tracker.key === 'sleeps' && activeSleep.value) return 'Asleep now…'
+  if (tracker.key === 'feedings' && activeFeeding.value) {
+    return `Feeding · ${elapsedLabel(activeFeeding.value.started_at)}`
+  }
+  if (tracker.key === 'sleeps' && activeSleep.value) {
+    return `Asleep · ${elapsedLabel(activeSleep.value.started_at)}`
+  }
   const entry = lastEntries[tracker.key]
   if (!entry) return 'No entries yet'
   const at = entry.started_at || entry.occurred_at || entry.measured_at || entry.given_at
@@ -76,8 +109,11 @@ function openSheet(key) {
   activeSheet.value = key
 }
 
-function closeSheet() {
+async function closeSheet() {
   activeSheet.value = null
+  // Starting a feed/sleep is a local-only action (no 'saved' event), so the
+  // live-tile state needs a refresh here too, not just after a full save.
+  await refreshState()
 }
 
 async function onSaved(result) {
@@ -119,8 +155,10 @@ async function onSaved(result) {
         v-for="t in trackers"
         :key="t.key"
         class="quick-btn"
+        :class="{ live: isLive(t) }"
         @click="openSheet(t.key)"
       >
+        <span v-if="isLive(t)" class="live-dot" aria-hidden="true"></span>
         <span class="emoji">{{ t.emoji }}</span>
         <span>{{ t.label }}</span>
         <span class="sub">{{ subCaption(t) }}</span>
