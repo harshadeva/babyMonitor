@@ -11,6 +11,7 @@ import SymptomForm from '@/components/forms/SymptomForm.vue'
 import { apiClient } from '@/api/client'
 import { useBabyStore } from '@/stores/baby'
 import { getSetting } from '@/offline/db'
+import { TRACKERS } from '@/constants/trackers'
 
 const babyStore = useBabyStore()
 const activeSheet = ref(null)
@@ -18,15 +19,21 @@ const toast = ref(null)
 const activeFeeding = ref(null)
 const activeSleep = ref(null)
 
-const trackers = [
-  { key: 'feedings', label: 'Feed', emoji: '🍼', component: FeedingForm },
-  { key: 'sleeps', label: 'Sleep', emoji: '😴', component: SleepForm },
-  { key: 'diapers', label: 'Diaper', emoji: '🧷', component: DiaperForm },
-  { key: 'temperatures', label: 'Temperature', emoji: '🌡️', component: TemperatureForm },
-  { key: 'growths', label: 'Growth', emoji: '📏', component: GrowthForm },
-  { key: 'medications', label: 'Medicine', emoji: '💊', component: MedicationForm },
-  { key: 'symptoms', label: 'Symptom', emoji: '📝', component: SymptomForm },
-]
+const FORM_COMPONENTS = {
+  feedings: FeedingForm,
+  sleeps: SleepForm,
+  diapers: DiaperForm,
+  temperatures: TemperatureForm,
+  growths: GrowthForm,
+  medications: MedicationForm,
+  symptoms: SymptomForm,
+}
+
+const trackers = Object.keys(TRACKERS).map((key) => ({
+  key,
+  ...TRACKERS[key],
+  component: FORM_COMPONENTS[key],
+}))
 
 const lastEntries = reactive({})
 

@@ -28,6 +28,11 @@ Default login (change `SEED_USER_PASSWORD` in `backend/.env` before seeding if y
 - Email: `hpbandara94@gmail.com`
 - Password: `password`
 
+A second, separate account + baby is also seeded for testing/poking around, so it never touches the real data above (override via `SEED_TEST_USER_EMAIL`/`SEED_TEST_USER_PASSWORD`):
+
+- Email: `test@example.com`
+- Password: `password`
+
 ## Deploying (Neon + Render + Vercel)
 
 Dev uses Docker Compose with a local Postgres container; production uses **Neon** (Postgres), **Render** (Laravel API), and **Vercel** (frontend static build) — three separate free-tier services, not this same docker-compose stack.

@@ -1,24 +1,17 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { apiClient } from '@/api/client'
 import { useBabyStore } from '@/stores/baby'
+import { TRACKERS } from '@/constants/trackers'
 
 const babyStore = useBabyStore()
 const loading = ref(true)
 const items = ref([])
-
-const TRACKER_META = {
-  feedings: { label: 'Feed', emoji: '🍼', time: 'started_at' },
-  sleeps: { label: 'Sleep', emoji: '😴', time: 'started_at' },
-  diapers: { label: 'Diaper', emoji: '🧷', time: 'occurred_at' },
-  temperatures: { label: 'Temp', emoji: '🌡️', time: 'measured_at' },
-  growths: { label: 'Growth', emoji: '📏', time: 'measured_at' },
-  medications: { label: 'Medicine', emoji: '💊', time: 'given_at' },
-  symptoms: { label: 'Symptom', emoji: '📝', time: 'occurred_at' },
-}
+const pendingDelete = ref(null)
 
 // All types shown by default; tapping a chip narrows the list down to it.
-const filters = reactive(Object.fromEntries(Object.keys(TRACKER_META).map((k) => [k, true])))
+const filters = reactive(Object.fromEntries(Object.keys(TRACKERS).map((k) => [k, true])))
 const allFiltersActive = computed(() => Object.values(filters).every(Boolean))
 
 function toggleFilter(entity) {
@@ -30,6 +23,35 @@ function showAll() {
 }
 
 const filteredItems = computed(() => items.value.filter((i) => filters[i.entity]))
+
+function dayLabel(dateStr) {
+  const d = new Date(dateStr)
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(today.getDate() - 1)
+  const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+  if (sameDay(d, today)) return 'Today'
+  if (sameDay(d, yesterday)) return 'Yesterday'
+  return d.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })
+}
+
+// filteredItems is already sorted newest-first, so a simple run-length group
+// keeps each day's entries together without re-sorting.
+const groupedItems = computed(() => {
+  const groups = []
+  let currentKey = null
+  let currentGroup = null
+  for (const item of filteredItems.value) {
+    const key = new Date(item.at).toDateString()
+    if (key !== currentKey) {
+      currentGroup = { key, label: dayLabel(item.at), items: [] }
+      groups.push(currentGroup)
+      currentKey = key
+    }
+    currentGroup.items.push(item)
+  }
+  return groups
+})
 
 function summarize(entity, entry) {
   switch (entity) {
@@ -72,7 +94,7 @@ async function load() {
   loading.value = true
   const babyId = babyStore.currentBabyId
   const results = await Promise.allSettled(
-    Object.keys(TRACKER_META).map((entity) =>
+    Object.keys(TRACKERS).map((entity) =>
       apiClient.get(`/api/babies/${babyId}/${entity}`).then((r) => ({ entity, rows: r.data.data }))
     )
   )
@@ -85,7 +107,7 @@ async function load() {
       merged.push({
         entity,
         id: row.id,
-        at: row[TRACKER_META[entity].time],
+        at: row[TRACKERS[entity].time],
         summary: summarize(entity, row),
         flagged: row.flagged_for_doctor || false,
       })
@@ -96,9 +118,20 @@ async function load() {
   loading.value = false
 }
 
-async function remove(item) {
+function askDelete(item) {
+  pendingDelete.value = item
+}
+
+function cancelDelete() {
+  pendingDelete.value = null
+}
+
+async function confirmDeleteEntry() {
+  const item = pendingDelete.value
+  if (!item) return
   await apiClient.delete(`/api/${item.entity}/${item.id}`)
   items.value = items.value.filter((i) => !(i.entity === item.entity && i.id === item.id))
+  pendingDelete.value = null
 }
 
 onMounted(async () => {
@@ -125,7 +158,7 @@ const isOnline = computed(() => navigator.onLine)
           All
         </button>
         <button
-          v-for="(meta, key) in TRACKER_META"
+          v-for="(meta, key) in TRACKERS"
           :key="key"
           type="button"
           class="filter-chip"
@@ -136,23 +169,38 @@ const isOnline = computed(() => navigator.onLine)
         </button>
       </div>
 
-      <div class="card">
-        <p v-if="items.length === 0" class="muted">Nothing logged yet.</p>
-        <p v-else-if="filteredItems.length === 0" class="muted">No entries match this filter.</p>
-        <div v-for="item in filteredItems" :key="item.entity + item.id" class="list-item">
-        <div>
-          <div style="font-weight:600;">
-            {{ TRACKER_META[item.entity].emoji }} {{ TRACKER_META[item.entity].label }}
-            <span v-if="item.flagged" class="pill alert">tell doctor</span>
+      <p v-if="items.length === 0" class="muted">Nothing logged yet.</p>
+      <p v-else-if="groupedItems.length === 0" class="muted">No entries match this filter.</p>
+
+      <div v-for="group in groupedItems" :key="group.key" class="history-day-group">
+        <div class="history-day-header">{{ group.label }}</div>
+        <div class="card" style="padding: 4px 12px;">
+          <div v-for="item in group.items" :key="item.entity + item.id" class="history-row">
+            <div class="history-icon" :style="{ background: TRACKERS[item.entity].color + '2e' }">
+              {{ TRACKERS[item.entity].emoji }}
+            </div>
+            <div class="history-row-body">
+              <div class="history-row-title">
+                {{ TRACKERS[item.entity].label }}
+                <span v-if="item.flagged" class="pill alert">tell doctor</span>
+              </div>
+              <div class="history-row-summary">{{ item.summary }}</div>
+            </div>
+            <div class="history-row-meta">
+              <div class="history-row-time">{{ new Date(item.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</div>
+              <button type="button" class="history-delete-btn" aria-label="Delete entry" @click="askDelete(item)">🗑️</button>
+            </div>
           </div>
-          <div class="muted">{{ item.summary }}</div>
-        </div>
-        <div style="text-align:right;">
-          <div class="muted">{{ new Date(item.at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}</div>
-          <button class="btn btn-danger" style="min-height:36px; padding: 4px 12px; font-size:13px; margin-top:4px;" @click="remove(item)">Delete</button>
-        </div>
         </div>
       </div>
     </template>
+
+    <ConfirmDialog
+      v-if="pendingDelete"
+      title="Delete this entry?"
+      :message="`${TRACKERS[pendingDelete.entity].label} · ${pendingDelete.summary}`"
+      @confirm="confirmDeleteEntry"
+      @cancel="cancelDelete"
+    />
   </div>
 </template>

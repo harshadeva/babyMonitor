@@ -53,14 +53,23 @@ async function load() {
     datasets: [{ label: 'Sleep (hours)', data: dayLabels.map((d) => Math.round(sleepHoursByDay[d] * 10) / 10), backgroundColor: '#b9a6e8' }],
   }
 
-  const feedCountByDay = Object.fromEntries(dayLabels.map((d) => [d, 0]))
+  const breastByDay = Object.fromEntries(dayLabels.map((d) => [d, 0]))
+  const pumpedByDay = Object.fromEntries(dayLabels.map((d) => [d, 0]))
+  const formulaByDay = Object.fromEntries(dayLabels.map((d) => [d, 0]))
   for (const f of feedings) {
     const day = f.started_at.slice(0, 10)
-    if (day in feedCountByDay) feedCountByDay[day] += 1
+    if (!(day in breastByDay)) continue
+    if (f.type === 'breast') breastByDay[day] += 1
+    else if (f.contents === 'expressed_milk') pumpedByDay[day] += 1
+    else if (f.contents === 'formula') formulaByDay[day] += 1
   }
   feedingData.value = {
     labels: dayShortLabels,
-    datasets: [{ label: 'Feeds per day', data: dayLabels.map((d) => feedCountByDay[d]), backgroundColor: '#ff9d66' }],
+    datasets: [
+      { label: 'Breastfed', data: dayLabels.map((d) => breastByDay[d]), backgroundColor: '#ff9d66' },
+      { label: 'Pumped milk', data: dayLabels.map((d) => pumpedByDay[d]), backgroundColor: '#ffb894' },
+      { label: 'Formula', data: dayLabels.map((d) => formulaByDay[d]), backgroundColor: '#e8c88a' },
+    ],
   }
 
   const wetByDay = Object.fromEntries(dayLabels.map((d) => [d, 0]))
@@ -82,7 +91,7 @@ async function load() {
   const sortedTemps = [...temps].sort((a, b) => new Date(a.measured_at) - new Date(b.measured_at)).slice(-30)
   temperatureData.value = {
     labels: sortedTemps.map((t) => new Date(t.measured_at).toLocaleDateString([], { month: 'short', day: 'numeric' })),
-    datasets: [{ label: '°C', data: sortedTemps.map((t) => Number(t.value_celsius)), borderColor: '#e0555a', tension: 0.3 }],
+    datasets: [{ label: '°C', data: sortedTemps.map((t) => Number(t.value_celsius)), borderColor: '#ff8fab', tension: 0.3 }],
   }
 
   loading.value = false
@@ -108,7 +117,7 @@ onMounted(async () => {
       </div>
       <div class="card" style="margin-bottom: 16px;">
         <h3 style="margin-top:0;">Feeds per day</h3>
-        <Bar :data="feedingData" :options="chartOptions" />
+        <Bar :data="feedingData" :options="{ ...chartOptions, scales: { x: { stacked: true }, y: { stacked: true } } }" />
       </div>
       <div class="card" style="margin-bottom: 16px;">
         <h3 style="margin-top:0;">Diapers per day</h3>

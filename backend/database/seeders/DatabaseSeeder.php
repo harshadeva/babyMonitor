@@ -16,13 +16,36 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $email = env('SEED_USER_EMAIL', 'hpbandara94@gmail.com');
-        $password = env('SEED_USER_PASSWORD', 'password');
+        $this->seedUserWithBaby(
+            email: env('SEED_USER_EMAIL', 'hpbandara94@gmail.com'),
+            password: env('SEED_USER_PASSWORD', 'password'),
+            name: 'Parent',
+            babyName: env('SEED_BABY_NAME', 'Baby'),
+            babyBirthDate: env('SEED_BABY_BIRTH_DATE', now()->toDateString()),
+        );
 
+        // A separate account + baby for testing, so poking around never
+        // touches the real account's data above.
+        $this->seedUserWithBaby(
+            email: env('SEED_TEST_USER_EMAIL', 'test@example.com'),
+            password: env('SEED_TEST_USER_PASSWORD', 'password'),
+            name: 'Test User',
+            babyName: 'Test Baby',
+            babyBirthDate: now()->subWeeks(6)->toDateString(),
+        );
+    }
+
+    private function seedUserWithBaby(
+        string $email,
+        string $password,
+        string $name,
+        string $babyName,
+        string $babyBirthDate,
+    ): void {
         $user = User::firstOrCreate(
             ['email' => $email],
             [
-                'name' => 'Parent',
+                'name' => $name,
                 'password' => $password,
             ]
         );
@@ -30,8 +53,8 @@ class DatabaseSeeder extends Seeder
         Baby::firstOrCreate(
             ['user_id' => $user->id],
             [
-                'name' => env('SEED_BABY_NAME', 'Baby'),
-                'birth_date' => env('SEED_BABY_BIRTH_DATE', now()->toDateString()),
+                'name' => $babyName,
+                'birth_date' => $babyBirthDate,
                 'sex' => 'unspecified',
             ]
         );
