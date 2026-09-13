@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { apiClient } from '@/api/client'
 import { useBabyStore } from '@/stores/baby'
 
@@ -16,6 +16,20 @@ const TRACKER_META = {
   medications: { label: 'Medicine', emoji: '💊', time: 'given_at' },
   symptoms: { label: 'Symptom', emoji: '📝', time: 'occurred_at' },
 }
+
+// All types shown by default; tapping a chip narrows the list down to it.
+const filters = reactive(Object.fromEntries(Object.keys(TRACKER_META).map((k) => [k, true])))
+const allFiltersActive = computed(() => Object.values(filters).every(Boolean))
+
+function toggleFilter(entity) {
+  filters[entity] = !filters[entity]
+}
+
+function showAll() {
+  for (const key of Object.keys(filters)) filters[key] = true
+}
+
+const filteredItems = computed(() => items.value.filter((i) => filters[i.entity]))
 
 function summarize(entity, entry) {
   switch (entity) {
@@ -102,10 +116,30 @@ const isOnline = computed(() => navigator.onLine)
     </div>
 
     <p v-if="!isOnline" class="muted">You're offline — history needs a connection to load.</p>
-    <p v-else-if="loading" class="muted">Loading…</p>
-    <div v-else class="card">
-      <p v-if="items.length === 0" class="muted">Nothing logged yet.</p>
-      <div v-for="item in items" :key="item.entity + item.id" class="list-item">
+    <template v-else-if="loading">
+      <p class="muted">Loading…</p>
+    </template>
+    <template v-else>
+      <div class="filter-chips">
+        <button type="button" class="filter-chip" :class="{ active: allFiltersActive }" @click="showAll">
+          All
+        </button>
+        <button
+          v-for="(meta, key) in TRACKER_META"
+          :key="key"
+          type="button"
+          class="filter-chip"
+          :class="{ active: filters[key] }"
+          @click="toggleFilter(key)"
+        >
+          {{ meta.emoji }} {{ meta.label }}
+        </button>
+      </div>
+
+      <div class="card">
+        <p v-if="items.length === 0" class="muted">Nothing logged yet.</p>
+        <p v-else-if="filteredItems.length === 0" class="muted">No entries match this filter.</p>
+        <div v-for="item in filteredItems" :key="item.entity + item.id" class="list-item">
         <div>
           <div style="font-weight:600;">
             {{ TRACKER_META[item.entity].emoji }} {{ TRACKER_META[item.entity].label }}
@@ -117,7 +151,8 @@ const isOnline = computed(() => navigator.onLine)
           <div class="muted">{{ new Date(item.at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}</div>
           <button class="btn btn-danger" style="min-height:36px; padding: 4px 12px; font-size:13px; margin-top:4px;" @click="remove(item)">Delete</button>
         </div>
+        </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>

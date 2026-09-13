@@ -2,10 +2,12 @@
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { onSyncStateChange, pendingCount } from '@/offline/sync'
+import { useTheme } from '@/composables/useTheme'
 
 const route = useRoute()
 const isOnline = ref(navigator.onLine)
 const pending = ref(0)
+const { theme, toggleTheme } = useTheme()
 
 function updateOnline() {
   isOnline.value = navigator.onLine
@@ -23,6 +25,15 @@ onMounted(async () => {
 
 <template>
   <div class="app-shell">
+    <button
+      class="theme-toggle"
+      type="button"
+      :aria-label="theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'"
+      @click="toggleTheme"
+    >
+      {{ theme === 'light' ? '🌙' : '☀️' }}
+    </button>
+
     <div v-if="!isOnline || pending > 0" class="toast" :class="{ warning: !isOnline }" style="position: sticky; top: 0; left: auto; right: auto; margin: 0 0 8px;">
       <span v-if="!isOnline">Offline — entries are being saved on this device</span>
       <span v-else>Syncing {{ pending }} saved {{ pending === 1 ? 'entry' : 'entries' }}…</span>

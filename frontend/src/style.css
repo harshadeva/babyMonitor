@@ -1,27 +1,49 @@
 :root {
-  --color-bg: #f8fafc;
+  /* Warm, soft "nursery" palette — light is the default look regardless of
+     system dark-mode preference; dark is an explicit opt-in via the toggle. */
+  --color-bg: #fff8f0;
   --color-surface: #ffffff;
-  --color-text: #0f172a;
-  --color-text-muted: #64748b;
-  --color-primary: #38bdf8;
-  --color-primary-dark: #0284c7;
-  --color-danger: #ef4444;
-  --color-warning: #f59e0b;
-  --color-border: #e2e8f0;
-  --radius-lg: 20px;
-  --radius-md: 14px;
+  --color-surface-soft: #fff1e6;
+  --color-text: #4a3b36;
+  --color-text-muted: #a8938c;
+  --color-primary: #ff9d66;
+  --color-primary-dark: #e8794a;
+  --color-on-primary: #5c3a22;
+  --color-secondary: #b9a6e8;
+  --color-secondary-dark: #8d74c9;
+  --color-success: #4f9d74;
+  --color-success-bg: #e3f6ec;
+  --color-danger: #e0555a;
+  --color-danger-bg: #fde8e8;
+  --color-warning: #c97a1a;
+  --color-warning-bg: #fff1de;
+  --color-border: #f2e1d4;
+  --radius-lg: 22px;
+  --radius-md: 16px;
   --tap-min: 64px;
+  --font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #0b1220;
-    --color-surface: #131c2e;
-    --color-text: #f1f5f9;
-    --color-text-muted: #94a3b8;
-    --color-border: #263041;
-  }
+:root[data-theme='dark'] {
+  --color-bg: #2a2126;
+  --color-surface: #372c30;
+  --color-surface-soft: #4a3a3e;
+  --color-text: #fdf3ec;
+  --color-text-muted: #c4a9a0;
+  --color-primary: #ffab7a;
+  --color-primary-dark: #ffc79e;
+  --color-on-primary: #3a2210;
+  --color-secondary: #c6b5f0;
+  --color-secondary-dark: #ddd0fa;
+  --color-success: #8fe6b8;
+  --color-success-bg: #33463c;
+  --color-danger: #ff8a8a;
+  --color-danger-bg: #4a3232;
+  --color-warning: #ffc876;
+  --color-warning-bg: #4a3c26;
+  --color-border: #4e4045;
+  color-scheme: dark;
 }
 
 * {
@@ -36,9 +58,10 @@ body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-family);
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: contain;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 button {
@@ -56,12 +79,35 @@ input, select, textarea {
 }
 
 .app-shell {
+  position: relative;
   max-width: 480px;
   margin: 0 auto;
   min-height: 100%;
   display: flex;
   flex-direction: column;
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+.theme-toggle {
+  position: absolute;
+  top: calc(16px + env(safe-area-inset-top));
+  right: 16px;
+  z-index: 25;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(90, 60, 40, 0.08);
+}
+
+.theme-toggle:active {
+  transform: scale(0.92);
 }
 
 .screen {
@@ -82,7 +128,8 @@ input, select, textarea {
   border-radius: var(--radius-md);
   border: none;
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 700;
+  font-family: var(--font-family);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -92,7 +139,7 @@ input, select, textarea {
 
 .btn-primary {
   background: var(--color-primary);
-  color: #04202e;
+  color: var(--color-on-primary);
 }
 
 .btn-primary:active {
@@ -106,7 +153,7 @@ input, select, textarea {
 }
 
 .btn-danger {
-  background: #fee2e2;
+  background: var(--color-danger-bg);
   color: var(--color-danger);
 }
 
@@ -123,7 +170,7 @@ input, select, textarea {
 
 .field label {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -152,14 +199,14 @@ input, select, textarea {
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 15px;
 }
 
 .segmented button.active {
   background: var(--color-primary);
   border-color: var(--color-primary);
-  color: #04202e;
+  color: var(--color-on-primary);
 }
 
 .quick-grid {
@@ -171,7 +218,7 @@ input, select, textarea {
 .quick-btn {
   position: relative;
   aspect-ratio: 1.1;
-  border-radius: 24px;
+  border-radius: 26px;
   border: none;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -182,8 +229,10 @@ input, select, textarea {
   gap: 8px;
   font-size: 16px;
   font-weight: 700;
+  font-family: var(--font-family);
   color: var(--color-text);
   cursor: pointer;
+  box-shadow: 0 2px 10px rgba(90, 60, 40, 0.05);
 }
 
 .quick-btn .emoji {
@@ -192,7 +241,7 @@ input, select, textarea {
 
 .quick-btn .sub {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-muted);
 }
 
@@ -201,12 +250,13 @@ input, select, textarea {
 }
 
 .quick-btn.live {
-  border-color: var(--color-primary);
+  border-color: var(--color-secondary);
+  background: var(--color-surface-soft);
   animation: quickBtnGlow 2.4s ease-in-out infinite;
 }
 
 .quick-btn.live .sub {
-  color: var(--color-primary-dark);
+  color: var(--color-secondary-dark);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -218,28 +268,28 @@ input, select, textarea {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #ef4444;
-  box-shadow: 0 0 0 rgba(239, 68, 68, 0.5);
+  background: var(--color-danger);
+  box-shadow: 0 0 0 rgba(224, 85, 90, 0.5);
   animation: liveDotPulse 1.4s ease-in-out infinite;
 }
 
 @keyframes liveDotPulse {
   0%, 100% {
     opacity: 1;
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+    box-shadow: 0 0 0 0 rgba(224, 85, 90, 0.5);
   }
   50% {
     opacity: 0.55;
-    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 6px rgba(224, 85, 90, 0);
   }
 }
 
 @keyframes quickBtnGlow {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.25);
+    box-shadow: 0 0 0 0 rgba(185, 166, 232, 0.35);
   }
   50% {
-    box-shadow: 0 0 0 6px rgba(56, 189, 248, 0);
+    box-shadow: 0 0 0 6px rgba(185, 166, 232, 0);
   }
 }
 
@@ -276,7 +326,7 @@ input, select, textarea {
   text-decoration: none;
   color: var(--color-text-muted);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .bottom-nav a.router-link-active {
@@ -286,7 +336,7 @@ input, select, textarea {
 .sheet-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(74, 59, 54, 0.45);
   z-index: 30;
   display: flex;
   align-items: flex-end;
@@ -297,7 +347,7 @@ input, select, textarea {
   width: 100%;
   max-width: 480px;
   margin: 0 auto;
-  border-radius: 24px 24px 0 0;
+  border-radius: 28px 28px 0 0;
   padding: 20px 16px calc(24px + env(safe-area-inset-bottom));
   max-height: 88vh;
   overflow-y: auto;
@@ -360,11 +410,12 @@ input, select, textarea {
   right: 16px;
   max-width: 448px;
   margin: 0 auto;
-  background: #111827;
-  color: #fff;
+  background: var(--color-text);
+  color: var(--color-bg);
   padding: 14px 16px;
   border-radius: var(--radius-md);
   font-size: 14px;
+  font-weight: 600;
   z-index: 50;
   display: flex;
   align-items: center;
@@ -373,7 +424,8 @@ input, select, textarea {
 }
 
 .toast.warning {
-  background: #92400e;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }
 
 .stepper {
@@ -389,7 +441,7 @@ input, select, textarea {
   border-radius: 50%;
   border: none;
   background: var(--color-primary);
-  color: #04202e;
+  color: var(--color-on-primary);
   font-size: 26px;
   font-weight: 700;
 }
@@ -436,11 +488,83 @@ input, select, textarea {
   border-radius: 999px;
   background: var(--color-bg);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-text-muted);
 }
 
 .pill.alert {
-  background: #fee2e2;
+  background: var(--color-danger-bg);
   color: var(--color-danger);
+}
+
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+}
+
+.filter-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-chip {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.filter-chip.active {
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: var(--color-on-primary);
+}
+
+/* Time input styled to look like the plain bold time text it replaces —
+   tapping it opens the browser's native time picker directly. */
+.time-value-input {
+  position: relative;
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-family);
+  font-weight: 700;
+  font-size: 18px;
+  text-align: center;
+  width: 100%;
+  padding: 2px 0;
+  cursor: pointer;
+}
+
+.time-value-input:focus {
+  outline: none;
+}
+
+/* Stretch the (invisible) native picker icon over the whole field so tapping
+   anywhere in it — not just a tiny icon — opens the time picker. */
+.time-value-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.time-value-hint {
+  text-align: center;
+  font-size: 11px;
+  color: var(--color-text-muted);
 }

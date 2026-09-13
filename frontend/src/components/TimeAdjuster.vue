@@ -20,9 +20,21 @@ const relativeLabel = computed(() => {
   return `in ${Math.abs(diffMin)} min`
 })
 
-const timeString = computed(() =>
-  props.modelValue.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-)
+// <input type="time"> wants "HH:MM" in 24-hour form.
+const timeInputValue = computed(() => {
+  const d = props.modelValue
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+})
+
+function onTimeInput(event) {
+  const value = event.target.value
+  if (!value) return
+  const [hours, minutes] = value.split(':').map(Number)
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return
+  const next = new Date(props.modelValue)
+  next.setHours(hours, minutes, 0, 0)
+  emit('update:modelValue', next)
+}
 </script>
 
 <template>
@@ -32,7 +44,14 @@ const timeString = computed(() =>
       <button type="button" class="btn btn-secondary" @click="adjust(-5)">-5m</button>
       <button type="button" class="btn btn-secondary" @click="adjust(-1)">-1m</button>
       <div style="text-align:center; flex:1;">
-        <div style="font-weight:700; font-size:18px;">{{ timeString }}</div>
+        <!-- Tapping the time directly opens the device's native time picker. -->
+        <input
+          type="time"
+          class="time-value-input"
+          :value="timeInputValue"
+          :aria-label="label"
+          @input="onTimeInput"
+        />
         <div class="muted">{{ relativeLabel }}</div>
       </div>
       <button type="button" class="btn btn-secondary" @click="adjust(1)">+1m</button>

@@ -50,7 +50,7 @@ async function load() {
   }
   sleepData.value = {
     labels: dayShortLabels,
-    datasets: [{ label: 'Sleep (hours)', data: dayLabels.map((d) => Math.round(sleepHoursByDay[d] * 10) / 10), backgroundColor: '#38bdf8' }],
+    datasets: [{ label: 'Sleep (hours)', data: dayLabels.map((d) => Math.round(sleepHoursByDay[d] * 10) / 10), backgroundColor: '#b9a6e8' }],
   }
 
   const feedCountByDay = Object.fromEntries(dayLabels.map((d) => [d, 0]))
@@ -60,7 +60,7 @@ async function load() {
   }
   feedingData.value = {
     labels: dayShortLabels,
-    datasets: [{ label: 'Feeds per day', data: dayLabels.map((d) => feedCountByDay[d]), backgroundColor: '#fbbf24' }],
+    datasets: [{ label: 'Feeds per day', data: dayLabels.map((d) => feedCountByDay[d]), backgroundColor: '#ff9d66' }],
   }
 
   const wetByDay = Object.fromEntries(dayLabels.map((d) => [d, 0]))
@@ -74,15 +74,15 @@ async function load() {
   diaperData.value = {
     labels: dayShortLabels,
     datasets: [
-      { label: 'Wet', data: dayLabels.map((d) => wetByDay[d]), backgroundColor: '#38bdf8' },
-      { label: 'Dirty', data: dayLabels.map((d) => dirtyByDay[d]), backgroundColor: '#a16207' },
+      { label: 'Wet', data: dayLabels.map((d) => wetByDay[d]), backgroundColor: '#8fd9c4' },
+      { label: 'Dirty', data: dayLabels.map((d) => dirtyByDay[d]), backgroundColor: '#c97a1a' },
     ],
   }
 
   const sortedTemps = [...temps].sort((a, b) => new Date(a.measured_at) - new Date(b.measured_at)).slice(-30)
   temperatureData.value = {
     labels: sortedTemps.map((t) => new Date(t.measured_at).toLocaleDateString([], { month: 'short', day: 'numeric' })),
-    datasets: [{ label: '°C', data: sortedTemps.map((t) => Number(t.value_celsius)), borderColor: '#ef4444', tension: 0.3 }],
+    datasets: [{ label: '°C', data: sortedTemps.map((t) => Number(t.value_celsius)), borderColor: '#e0555a', tension: 0.3 }],
   }
 
   loading.value = false

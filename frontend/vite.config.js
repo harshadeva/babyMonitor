@@ -14,8 +14,8 @@ export default defineConfig({
         name: 'Baby Monitor',
         short_name: 'Baby Monitor',
         description: 'Fast, offline-friendly newborn tracking',
-        theme_color: '#38bdf8',
-        background_color: '#f8fafc',
+        theme_color: '#fff8f0',
+        background_color: '#fff8f0',
         display: 'standalone',
         start_url: '/',
         icons: [
