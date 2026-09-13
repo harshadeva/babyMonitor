@@ -13,11 +13,16 @@ function adjust(minutes) {
 }
 
 const relativeLabel = computed(() => {
-  const diffMs = Date.now() - props.modelValue.getTime()
-  const diffMin = Math.round(diffMs / 60_000)
-  if (diffMin === 0) return 'Now'
-  if (diffMin > 0) return `${diffMin} min ago`
-  return `in ${Math.abs(diffMin)} min`
+  const diffMin = Math.round((Date.now() - props.modelValue.getTime()) / 60_000)
+  const abs = Math.abs(diffMin)
+  const direction = (text) => (diffMin >= 0 ? `${text} ago` : `in ${text}`)
+
+  if (abs < 1) return 'Now'
+  if (abs < 60) return direction(`${abs} min`)
+  const hours = Math.floor(abs / 60)
+  if (hours < 24) return direction(`${hours}h`)
+  const days = Math.floor(hours / 24)
+  return direction(`${days}d`)
 })
 
 // <input type="time"> wants "HH:MM" in 24-hour form.
@@ -33,6 +38,32 @@ function onTimeInput(event) {
   if (Number.isNaN(hours) || Number.isNaN(minutes)) return
   const next = new Date(props.modelValue)
   next.setHours(hours, minutes, 0, 0)
+  emit('update:modelValue', next)
+}
+
+// Changing the date is rare (defaults to today), so it rides along on the
+// small caption line rather than getting its own prominent control.
+// <input type="date"> wants "YYYY-MM-DD".
+const dateInputValue = computed(() => {
+  const d = props.modelValue
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+})
+
+const dateLabel = computed(() => {
+  const d = props.modelValue
+  const today = new Date()
+  const isToday =
+    d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate()
+  return isToday ? 'Today' : d.toLocaleDateString([], { month: 'short', day: 'numeric' })
+})
+
+function onDateInput(event) {
+  const value = event.target.value
+  if (!value) return
+  const [year, month, day] = value.split('-').map(Number)
+  if ([year, month, day].some(Number.isNaN)) return
+  const next = new Date(props.modelValue)
+  next.setFullYear(year, month - 1, day)
   emit('update:modelValue', next)
 }
 </script>
@@ -52,7 +83,23 @@ function onTimeInput(event) {
           :aria-label="label"
           @input="onTimeInput"
         />
-        <div class="muted">{{ relativeLabel }}</div>
+        <div class="time-sub-row">
+          <span class="muted">{{ relativeLabel }}</span>
+          <span class="muted">·</span>
+          <!-- Changing the date is rare, so it's just small underlined text —
+               tapping it opens the native date picker (invisible input laid
+               directly over the label, so the tap always lands on it). -->
+          <span class="date-field-wrap">
+            <span class="date-value-label">{{ dateLabel }}</span>
+            <input
+              type="date"
+              class="date-value-input"
+              :value="dateInputValue"
+              :aria-label="label + ' date'"
+              @input="onDateInput"
+            />
+          </span>
+        </div>
       </div>
       <button type="button" class="btn btn-secondary" @click="adjust(1)">+1m</button>
       <button type="button" class="btn btn-secondary" @click="adjust(5)">+5m</button>
