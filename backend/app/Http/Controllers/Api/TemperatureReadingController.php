@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\StoreTemperatureReadingRequest;
+use App\Http\Requests\UpdateTemperatureReadingRequest;
 use App\Http\Resources\TemperatureReadingResource;
 use App\Models\Baby;
 use App\Models\TemperatureReading;
@@ -57,17 +58,17 @@ class TemperatureReadingController extends BabyScopedApiController
         ]);
     }
 
-    public function update(Request $request, TemperatureReading $temperature)
+    public function update(UpdateTemperatureReadingRequest $request, TemperatureReading $temperature)
     {
         $this->ensureOwnsRecord($request, $temperature);
 
-        $data = $request->validate([
-            'notes' => ['nullable', 'string', 'max:2000'],
-        ]);
+        $data = $request->validated();
 
         $temperature->update($data);
 
-        return new TemperatureReadingResource($temperature);
+        return (new TemperatureReadingResource($temperature->load('creator')))->additional([
+            'meta' => ['is_fever' => $temperature->value_celsius >= self::FEVER_THRESHOLD_CELSIUS],
+        ]);
     }
 
     public function destroy(Request $request, TemperatureReading $temperature)

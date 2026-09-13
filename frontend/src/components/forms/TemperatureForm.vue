@@ -4,20 +4,27 @@ import RemarkField from '@/components/RemarkField.vue'
 import TimeAdjuster from '@/components/TimeAdjuster.vue'
 import { TEMPERATURE_METHODS } from '@/constants/options'
 import { useEntryLogger } from '@/composables/useEntryLogger'
+import { useEntryEditor } from '@/composables/useEntryEditor'
 import { getSetting, setSetting } from '@/offline/db'
 
-const props = defineProps({ babyId: { type: Number, required: true } })
+const props = defineProps({
+  babyId: { type: Number, required: true },
+  record: { type: Object, default: null },
+})
 const emit = defineEmits(['saved'])
+const isEditing = !!props.record
 
 const { submit, isSubmitting } = useEntryLogger('temperatures')
+const { saveEdit, isSaving } = useEntryEditor('temperatures')
 
 const unit = ref('C')
-const method = ref('armpit')
-const when = ref(new Date())
-const valueC = ref(36.5)
-const notes = ref('')
+const method = ref(isEditing ? props.record.method : 'armpit')
+const when = ref(isEditing ? new Date(props.record.measured_at) : new Date())
+const valueC = ref(isEditing ? Number(props.record.value_celsius) : 36.5)
+const notes = ref(isEditing ? props.record.notes || '' : '')
 
 onMounted(async () => {
+  if (isEditing) return
   unit.value = await getSetting('temp_unit', 'C')
   method.value = await getSetting('temp_method', 'armpit')
 })
@@ -35,16 +42,21 @@ function step() {
 }
 
 async function save() {
-  await setSetting('temp_unit', unit.value)
-  await setSetting('temp_method', method.value)
-
-  const result = await submit(props.babyId, {
+  const payload = {
     measured_at: when.value.toISOString(),
     value_celsius: valueC.value,
     method: method.value,
     notes: notes.value || null,
-  })
-  emit('saved', result)
+  }
+
+  if (isEditing) {
+    emit('saved', await saveEdit(props.record.id, payload))
+    return
+  }
+
+  await setSetting('temp_unit', unit.value)
+  await setSetting('temp_method', method.value)
+  emit('saved', await submit(props.babyId, payload))
 }
 </script>
 
@@ -74,8 +86,8 @@ async function save() {
     <TimeAdjuster v-model="when" />
     <RemarkField v-model="notes" />
 
-    <button class="btn btn-primary btn-block" :disabled="isSubmitting" @click="save">
-      {{ isSubmitting ? 'Saving…' : 'Log temperature' }}
+    <button class="btn btn-primary btn-block" :disabled="isSubmitting || isSaving" @click="save">
+      {{ (isSubmitting || isSaving) ? 'Saving…' : isEditing ? 'Save changes' : 'Log temperature' }}
     </button>
   </div>
 </template>

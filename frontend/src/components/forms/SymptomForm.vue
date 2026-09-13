@@ -4,23 +4,30 @@ import RemarkField from '@/components/RemarkField.vue'
 import TimeAdjuster from '@/components/TimeAdjuster.vue'
 import { SYMPTOM_TAGS } from '@/constants/options'
 import { useEntryLogger } from '@/composables/useEntryLogger'
+import { useEntryEditor } from '@/composables/useEntryEditor'
 
-const props = defineProps({ babyId: { type: Number, required: true } })
+const props = defineProps({
+  babyId: { type: Number, required: true },
+  record: { type: Object, default: null },
+})
 const emit = defineEmits(['saved'])
+const isEditing = !!props.record
 
 const { submit, isSubmitting } = useEntryLogger('symptoms')
+const { saveEdit, isSaving } = useEntryEditor('symptoms')
 
-const when = ref(new Date())
-const tag = ref('fussy')
-const notes = ref('')
+const when = ref(isEditing ? new Date(props.record.occurred_at) : new Date())
+const tag = ref(isEditing ? props.record.tag : 'fussy')
+const notes = ref(isEditing ? props.record.notes || '' : '')
 
 async function save() {
-  const result = await submit(props.babyId, {
+  const payload = {
     occurred_at: when.value.toISOString(),
     tag: tag.value,
     notes: notes.value || null,
-  })
-  emit('saved', result)
+  }
+
+  emit('saved', isEditing ? await saveEdit(props.record.id, payload) : await submit(props.babyId, payload))
 }
 </script>
 
@@ -45,8 +52,8 @@ async function save() {
 
     <TimeAdjuster v-model="when" />
 
-    <button class="btn btn-primary btn-block" :disabled="isSubmitting" @click="save">
-      {{ isSubmitting ? 'Saving…' : 'Log note' }}
+    <button class="btn btn-primary btn-block" :disabled="isSubmitting || isSaving" @click="save">
+      {{ (isSubmitting || isSaving) ? 'Saving…' : isEditing ? 'Save changes' : 'Log note' }}
     </button>
   </div>
 </template>

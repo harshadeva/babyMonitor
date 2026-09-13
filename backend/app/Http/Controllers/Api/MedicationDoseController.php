@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\StoreMedicationDoseRequest;
+use App\Http\Requests\UpdateMedicationDoseRequest;
 use App\Http\Resources\MedicationDoseResource;
 use App\Models\Baby;
 use App\Models\MedicationDose;
@@ -35,19 +36,15 @@ class MedicationDoseController extends BabyScopedApiController
         return new MedicationDoseResource($dose);
     }
 
-    public function update(Request $request, MedicationDose $medication)
+    public function update(UpdateMedicationDoseRequest $request, MedicationDose $medication)
     {
         $this->ensureOwnsRecord($request, $medication);
 
-        $data = $request->validate([
-            'name' => ['sometimes', 'string', 'max:255'],
-            'dose' => ['nullable', 'string', 'max:100'],
-            'notes' => ['nullable', 'string', 'max:2000'],
-        ]);
+        $data = $request->validated();
 
         $medication->update($data);
 
-        return new MedicationDoseResource($medication);
+        return new MedicationDoseResource($medication->load('creator'));
     }
 
     public function destroy(Request $request, MedicationDose $medication)

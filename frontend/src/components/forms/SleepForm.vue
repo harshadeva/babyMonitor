@@ -4,21 +4,27 @@ import RemarkField from '@/components/RemarkField.vue'
 import TimeAdjuster from '@/components/TimeAdjuster.vue'
 import { apiClient, ensureCsrfCookie } from '@/api/client'
 import { useEntryLogger } from '@/composables/useEntryLogger'
+import { useEntryEditor } from '@/composables/useEntryEditor'
 import { generateUuid } from '@/utils/uuid'
 import { getSetting, setSetting } from '@/offline/db'
 
-const props = defineProps({ babyId: { type: Number, required: true } })
+const props = defineProps({
+  babyId: { type: Number, required: true },
+  record: { type: Object, default: null },
+})
 const emit = defineEmits(['saved'])
+const isEditing = !!props.record
 
 const { submit, isSubmitting } = useEntryLogger('sleeps')
+const { saveEdit, isSaving } = useEntryEditor('sleeps')
 
 // active.id is set once the server knows about the session — from then on,
 // every caregiver watching this baby sees it via the shared sleeps list, and
 // ending it means updating that same row rather than creating a new one.
 const active = ref(null)
 const endTime = ref(new Date())
-const notes = ref('')
-const loadingActive = ref(true)
+const notes = ref(isEditing ? props.record.notes || '' : '')
+const loadingActive = ref(!isEditing)
 const isStarting = ref(false)
 const isEnding = ref(false)
 
@@ -28,7 +34,23 @@ const pastStart = ref(new Date(Date.now() - 60 * 60_000))
 const pastEnd = ref(new Date())
 const stillAsleep = ref(false)
 
+// Edit mode only: editing an already-logged sleep directly, rather than
+// through the live start/end flow below (which is for new sleeps).
+const editStart = ref(isEditing ? new Date(props.record.started_at) : new Date())
+const editEnd = ref(isEditing && props.record.ended_at ? new Date(props.record.ended_at) : new Date())
+const editStillAsleep = ref(isEditing ? !props.record.ended_at : false)
+
+async function saveEditedSleep() {
+  const payload = {
+    started_at: editStart.value.toISOString(),
+    ended_at: editStillAsleep.value ? null : editEnd.value.toISOString(),
+    notes: notes.value || null,
+  }
+  emit('saved', await saveEdit(props.record.id, payload))
+}
+
 onMounted(async () => {
+  if (isEditing) return
   await refreshActive()
 })
 
@@ -161,7 +183,28 @@ async function logPastSleep() {
 
 <template>
   <div>
-    <p v-if="loadingActive" class="muted">Checking for an ongoing sleep…</p>
+    <template v-if="isEditing">
+      <TimeAdjuster v-model="editStart" label="Fell asleep" />
+
+      <div class="field">
+        <label>Has baby woken up?</label>
+        <div class="segmented">
+          <button type="button" :class="{ active: !editStillAsleep }" @click="editStillAsleep = false">Yes</button>
+          <button type="button" :class="{ active: editStillAsleep }" @click="editStillAsleep = true">Still asleep</button>
+        </div>
+      </div>
+
+      <TimeAdjuster v-if="!editStillAsleep" v-model="editEnd" label="Woke up" />
+      <p v-else class="muted" style="margin-bottom: 16px;">This will show as an ongoing nap until a wake-up time is logged.</p>
+
+      <RemarkField v-model="notes" />
+
+      <button class="btn btn-primary btn-block" :disabled="isSaving" @click="saveEditedSleep">
+        {{ isSaving ? 'Saving…' : 'Save changes' }}
+      </button>
+    </template>
+
+    <p v-else-if="loadingActive" class="muted">Checking for an ongoing sleep…</p>
 
     <template v-else-if="active">
       <p class="muted">Asleep since {{ new Date(active.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</p>

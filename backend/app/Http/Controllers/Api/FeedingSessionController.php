@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\StoreFeedingSessionRequest;
+use App\Http\Requests\UpdateFeedingSessionRequest;
 use App\Http\Resources\FeedingSessionResource;
 use App\Models\Baby;
 use App\Models\FeedingSession;
@@ -52,18 +53,15 @@ class FeedingSessionController extends BabyScopedApiController
         return new FeedingSessionResource($feeding);
     }
 
-    public function update(Request $request, FeedingSession $feeding)
+    public function update(UpdateFeedingSessionRequest $request, FeedingSession $feeding)
     {
         $this->ensureOwnsRecord($request, $feeding);
 
-        $data = $request->validate([
-            'ended_at' => ['nullable', 'date', 'after_or_equal:started_at'],
-            'notes' => ['nullable', 'string', 'max:2000'],
-        ]);
+        $data = $request->validated();
 
         $feeding->update($data);
 
-        return new FeedingSessionResource($feeding);
+        return new FeedingSessionResource($feeding->load('creator'));
     }
 
     public function destroy(Request $request, FeedingSession $feeding)

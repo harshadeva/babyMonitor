@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\StoreDiaperChangeRequest;
+use App\Http\Requests\UpdateDiaperChangeRequest;
 use App\Http\Resources\DiaperChangeResource;
 use App\Models\Baby;
 use App\Models\DiaperChange;
@@ -66,23 +67,21 @@ class DiaperChangeController extends BabyScopedApiController
         return new DiaperChangeResource($diaper);
     }
 
-    public function update(Request $request, DiaperChange $diaper)
+    public function update(UpdateDiaperChangeRequest $request, DiaperChange $diaper)
     {
         $this->ensureOwnsRecord($request, $diaper);
 
-        $data = $request->validate([
-            'stool_color_name' => ['nullable', 'string', 'max:50'],
-            'stool_color_hex' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
-            'notes' => ['nullable', 'string', 'max:2000'],
-        ]);
+        $data = $request->validated();
 
-        if (array_key_exists('stool_color_name', $data)) {
-            $data['flagged_for_doctor'] = $this->isAlarmColor($diaper->baby, $data['stool_color_name']);
+        if (array_key_exists('dirty', $data) || array_key_exists('stool_color_name', $data)) {
+            $isDirty = array_key_exists('dirty', $data) ? $data['dirty'] : $diaper->dirty;
+            $colorName = array_key_exists('stool_color_name', $data) ? $data['stool_color_name'] : $diaper->stool_color_name;
+            $data['flagged_for_doctor'] = $isDirty ? $this->isAlarmColor($diaper->baby, $colorName) : false;
         }
 
         $diaper->update($data);
 
-        return new DiaperChangeResource($diaper);
+        return new DiaperChangeResource($diaper->load('creator'));
     }
 
     public function destroy(Request $request, DiaperChange $diaper)

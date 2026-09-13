@@ -1,16 +1,36 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import BottomSheet from '@/components/BottomSheet.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import HistoryDetailModal from '@/components/HistoryDetailModal.vue'
+import FeedingForm from '@/components/forms/FeedingForm.vue'
+import SleepForm from '@/components/forms/SleepForm.vue'
+import DiaperForm from '@/components/forms/DiaperForm.vue'
+import TemperatureForm from '@/components/forms/TemperatureForm.vue'
+import GrowthForm from '@/components/forms/GrowthForm.vue'
+import MedicationForm from '@/components/forms/MedicationForm.vue'
+import SymptomForm from '@/components/forms/SymptomForm.vue'
 import { apiClient } from '@/api/client'
 import { useBabyStore } from '@/stores/baby'
 import { TRACKERS } from '@/constants/trackers'
+
+const FORM_COMPONENTS = {
+  feedings: FeedingForm,
+  sleeps: SleepForm,
+  diapers: DiaperForm,
+  temperatures: TemperatureForm,
+  growths: GrowthForm,
+  medications: MedicationForm,
+  symptoms: SymptomForm,
+}
 
 const babyStore = useBabyStore()
 const loading = ref(true)
 const items = ref([])
 const pendingDelete = ref(null)
 const selectedItem = ref(null)
+const editingItem = ref(null)
+const toast = ref(null)
 
 // All types shown by default; tapping a chip narrows the list down to it.
 const filters = reactive(Object.fromEntries(Object.keys(TRACKERS).map((k) => [k, true])))
@@ -125,6 +145,28 @@ function openDetail(item) {
   selectedItem.value = item
 }
 
+function openEdit(item) {
+  selectedItem.value = null
+  editingItem.value = item
+}
+
+function closeEdit() {
+  editingItem.value = null
+}
+
+async function onEditSaved(result) {
+  if (result?.error) {
+    toast.value = { type: 'warning', message: result.error.message || 'Not saved — please check the entry and try again.' }
+    setTimeout(() => (toast.value = null), 4500)
+    return
+  }
+
+  closeEdit()
+  await load()
+  toast.value = { type: 'ok', message: 'Changes saved ✓' }
+  setTimeout(() => (toast.value = null), 3500)
+}
+
 function askDelete(item) {
   pendingDelete.value = item
 }
@@ -214,6 +256,20 @@ const isOnline = computed(() => navigator.onLine)
       v-if="selectedItem"
       :item="selectedItem"
       @close="selectedItem = null"
+      @edit="openEdit"
     />
+
+    <BottomSheet v-if="editingItem" :title="`Edit ${TRACKERS[editingItem.entity].label}`" @close="closeEdit">
+      <component
+        :is="FORM_COMPONENTS[editingItem.entity]"
+        :baby-id="babyStore.currentBabyId"
+        :record="editingItem.raw"
+        @saved="onEditSaved"
+      />
+    </BottomSheet>
+
+    <div v-if="toast" class="toast" :class="{ warning: toast.type === 'warning' }" style="top: auto; bottom: 88px;">
+      {{ toast.message }}
+    </div>
   </div>
 </template>

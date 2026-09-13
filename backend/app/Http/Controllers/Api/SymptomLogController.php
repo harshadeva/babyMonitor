@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\StoreSymptomLogRequest;
+use App\Http\Requests\UpdateSymptomLogRequest;
 use App\Http\Resources\SymptomLogResource;
 use App\Models\Baby;
 use App\Models\SymptomLog;
@@ -35,17 +36,15 @@ class SymptomLogController extends BabyScopedApiController
         return new SymptomLogResource($log);
     }
 
-    public function update(Request $request, SymptomLog $symptom)
+    public function update(UpdateSymptomLogRequest $request, SymptomLog $symptom)
     {
         $this->ensureOwnsRecord($request, $symptom);
 
-        $data = $request->validate([
-            'notes' => ['nullable', 'string', 'max:2000'],
-        ]);
+        $data = $request->validated();
 
         $symptom->update($data);
 
-        return new SymptomLogResource($symptom);
+        return new SymptomLogResource($symptom->load('creator'));
     }
 
     public function destroy(Request $request, SymptomLog $symptom)

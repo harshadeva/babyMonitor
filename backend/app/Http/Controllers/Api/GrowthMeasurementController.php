@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\StoreGrowthMeasurementRequest;
+use App\Http\Requests\UpdateGrowthMeasurementRequest;
 use App\Http\Resources\GrowthMeasurementResource;
 use App\Models\Baby;
 use App\Models\GrowthMeasurement;
@@ -35,20 +36,15 @@ class GrowthMeasurementController extends BabyScopedApiController
         return new GrowthMeasurementResource($measurement);
     }
 
-    public function update(Request $request, GrowthMeasurement $growth)
+    public function update(UpdateGrowthMeasurementRequest $request, GrowthMeasurement $growth)
     {
         $this->ensureOwnsRecord($request, $growth);
 
-        $data = $request->validate([
-            'weight_grams' => ['nullable', 'integer', 'min:0', 'max:30000'],
-            'length_cm' => ['nullable', 'numeric', 'between:0,120'],
-            'head_circumference_cm' => ['nullable', 'numeric', 'between:0,60'],
-            'notes' => ['nullable', 'string', 'max:2000'],
-        ]);
+        $data = $request->validated();
 
         $growth->update($data);
 
-        return new GrowthMeasurementResource($growth);
+        return new GrowthMeasurementResource($growth->load('creator'));
     }
 
     public function destroy(Request $request, GrowthMeasurement $growth)

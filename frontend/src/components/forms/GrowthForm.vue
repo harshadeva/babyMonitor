@@ -3,27 +3,34 @@ import { ref } from 'vue'
 import RemarkField from '@/components/RemarkField.vue'
 import TimeAdjuster from '@/components/TimeAdjuster.vue'
 import { useEntryLogger } from '@/composables/useEntryLogger'
+import { useEntryEditor } from '@/composables/useEntryEditor'
 
-const props = defineProps({ babyId: { type: Number, required: true } })
+const props = defineProps({
+  babyId: { type: Number, required: true },
+  record: { type: Object, default: null },
+})
 const emit = defineEmits(['saved'])
+const isEditing = !!props.record
 
 const { submit, isSubmitting } = useEntryLogger('growths')
+const { saveEdit, isSaving } = useEntryEditor('growths')
 
-const when = ref(new Date())
-const weightGrams = ref(null)
-const lengthCm = ref(null)
-const headCm = ref(null)
-const notes = ref('')
+const when = ref(isEditing ? new Date(props.record.measured_at) : new Date())
+const weightGrams = ref(isEditing ? props.record.weight_grams : null)
+const lengthCm = ref(isEditing ? props.record.length_cm : null)
+const headCm = ref(isEditing ? props.record.head_circumference_cm : null)
+const notes = ref(isEditing ? props.record.notes || '' : '')
 
 async function save() {
-  const result = await submit(props.babyId, {
+  const payload = {
     measured_at: when.value.toISOString(),
     weight_grams: weightGrams.value || null,
     length_cm: lengthCm.value || null,
     head_circumference_cm: headCm.value || null,
     notes: notes.value || null,
-  })
-  emit('saved', result)
+  }
+
+  emit('saved', isEditing ? await saveEdit(props.record.id, payload) : await submit(props.babyId, payload))
 }
 </script>
 
@@ -45,8 +52,8 @@ async function save() {
     <TimeAdjuster v-model="when" />
     <RemarkField v-model="notes" />
 
-    <button class="btn btn-primary btn-block" :disabled="isSubmitting" @click="save">
-      {{ isSubmitting ? 'Saving…' : 'Log measurement' }}
+    <button class="btn btn-primary btn-block" :disabled="isSubmitting || isSaving" @click="save">
+      {{ (isSubmitting || isSaving) ? 'Saving…' : isEditing ? 'Save changes' : 'Log measurement' }}
     </button>
   </div>
 </template>

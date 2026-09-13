@@ -4,24 +4,33 @@ import RemarkField from '@/components/RemarkField.vue'
 import TimeAdjuster from '@/components/TimeAdjuster.vue'
 import { STOOL_COLORS, STOOL_CONSISTENCIES } from '@/constants/options'
 import { useEntryLogger } from '@/composables/useEntryLogger'
+import { useEntryEditor } from '@/composables/useEntryEditor'
 import { getSetting, setSetting } from '@/offline/db'
 
-const props = defineProps({ babyId: { type: Number, required: true } })
+const props = defineProps({
+  babyId: { type: Number, required: true },
+  record: { type: Object, default: null },
+})
 const emit = defineEmits(['saved'])
+const isEditing = !!props.record
 
 const { submit, isSubmitting } = useEntryLogger('diapers')
+const { saveEdit, isSaving } = useEntryEditor('diapers')
 
-const when = ref(new Date())
-const product = ref('disposable')
-const wet = ref(true)
-const dirty = ref(false)
-const selectedColor = ref(STOOL_COLORS[3]) // mustard yellow — the common healthy default
-const customHex = ref('#6b4423')
-const useCustomColor = ref(false)
-const consistency = ref(null)
-const notes = ref('')
+const presetMatch = isEditing ? STOOL_COLORS.find((c) => c.name === props.record.stool_color_name) : null
+
+const when = ref(isEditing ? new Date(props.record.occurred_at) : new Date())
+const product = ref(isEditing ? props.record.product : 'disposable')
+const wet = ref(isEditing ? props.record.wet : true)
+const dirty = ref(isEditing ? props.record.dirty : false)
+const selectedColor = ref(presetMatch || STOOL_COLORS[3]) // mustard yellow — the common healthy default
+const customHex = ref(isEditing && !presetMatch ? props.record.stool_color_hex || '#6b4423' : '#6b4423')
+const useCustomColor = ref(isEditing ? !presetMatch && !!props.record.stool_color_name : false)
+const consistency = ref(isEditing ? props.record.stool_consistency : null)
+const notes = ref(isEditing ? props.record.notes || '' : '')
 
 onMounted(async () => {
+  if (isEditing) return
   product.value = await getSetting('last_diaper_product', 'disposable')
 })
 
@@ -31,12 +40,10 @@ function pickColor(color) {
 }
 
 async function save() {
-  await setSetting('last_diaper_product', product.value)
-
   const colorName = useCustomColor.value ? 'Custom' : selectedColor.value?.name ?? null
   const colorHex = useCustomColor.value ? customHex.value : selectedColor.value?.hex ?? null
 
-  const result = await submit(props.babyId, {
+  const payload = {
     occurred_at: when.value.toISOString(),
     product: product.value,
     wet: wet.value,
@@ -45,8 +52,15 @@ async function save() {
     stool_color_hex: dirty.value ? colorHex : null,
     stool_consistency: dirty.value ? consistency.value : null,
     notes: notes.value || null,
-  })
-  emit('saved', result)
+  }
+
+  if (isEditing) {
+    emit('saved', await saveEdit(props.record.id, payload))
+    return
+  }
+
+  await setSetting('last_diaper_product', product.value)
+  emit('saved', await submit(props.babyId, payload))
 }
 </script>
 
@@ -102,8 +116,8 @@ async function save() {
     <TimeAdjuster v-model="when" />
     <RemarkField v-model="notes" />
 
-    <button class="btn btn-primary btn-block" :disabled="isSubmitting" @click="save">
-      {{ isSubmitting ? 'Saving…' : 'Log diaper change' }}
+    <button class="btn btn-primary btn-block" :disabled="isSubmitting || isSaving" @click="save">
+      {{ (isSubmitting || isSaving) ? 'Saving…' : isEditing ? 'Save changes' : 'Log diaper change' }}
     </button>
   </div>
 </template>

@@ -5,7 +5,7 @@ import { TRACKERS } from '@/constants/trackers'
 const props = defineProps({
   item: { type: Object, required: true }, // { entity, id, at, summary, flagged, raw }
 })
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'edit'])
 
 const meta = computed(() => TRACKERS[props.item.entity])
 const raw = computed(() => props.item.raw)
@@ -92,6 +92,7 @@ const detailRows = computed(() => {
           <div class="detail-title">{{ meta.label }}</div>
           <div class="detail-time">{{ fmtTime(item.at) }}</div>
         </div>
+        <button type="button" class="detail-edit" aria-label="Edit entry" @click="emit('edit', item)">✏️</button>
         <button type="button" class="detail-close" aria-label="Close" @click="emit('close')">✕</button>
       </div>
 

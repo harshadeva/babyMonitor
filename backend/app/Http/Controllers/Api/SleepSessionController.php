@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\StoreSleepSessionRequest;
+use App\Http\Requests\UpdateSleepSessionRequest;
 use App\Http\Resources\SleepSessionResource;
 use App\Models\Baby;
 use App\Models\SleepSession;
@@ -64,14 +65,11 @@ class SleepSessionController extends BabyScopedApiController
         return new SleepSessionResource($sleep);
     }
 
-    public function update(Request $request, SleepSession $sleep)
+    public function update(UpdateSleepSessionRequest $request, SleepSession $sleep)
     {
         $this->ensureOwnsRecord($request, $sleep);
 
-        $data = $request->validate([
-            'ended_at' => ['nullable', 'date', 'after_or_equal:started_at'],
-            'notes' => ['nullable', 'string', 'max:2000'],
-        ]);
+        $data = $request->validated();
 
         $sleep->update($data);
 
