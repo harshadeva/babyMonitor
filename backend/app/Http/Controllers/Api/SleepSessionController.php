@@ -31,6 +31,18 @@ class SleepSessionController extends BabyScopedApiController
         $this->ensureOwnsBaby($request, $baby);
 
         $data = $request->validated();
+
+        // Starting a sleep (no ended_at yet) is how caregivers signal "asleep
+        // now" to each other. If one is already open, hand that back instead
+        // of opening a second one — e.g. a caregiver's screen was stale and
+        // didn't know the other had already started the timer.
+        if (empty($data['ended_at'])) {
+            $activeSession = $baby->sleepSessions()->whereNull('ended_at')->with('creator')->first();
+            if ($activeSession) {
+                return new SleepSessionResource($activeSession);
+            }
+        }
+
         $data['created_by'] = $request->user()->id;
 
         $duplicate = $this->findPossibleDuplicate(
@@ -63,7 +75,7 @@ class SleepSessionController extends BabyScopedApiController
 
         $sleep->update($data);
 
-        return new SleepSessionResource($sleep);
+        return new SleepSessionResource($sleep->load('creator'));
     }
 
     public function destroy(Request $request, SleepSession $sleep)

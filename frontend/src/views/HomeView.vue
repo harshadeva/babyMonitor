@@ -17,7 +17,6 @@ const babyStore = useBabyStore()
 const activeSheet = ref(null)
 const toast = ref(null)
 const activeFeeding = ref(null)
-const activeSleep = ref(null)
 const reminderSettings = ref({})
 
 const FORM_COMPONENTS = {
@@ -38,6 +37,14 @@ const trackers = Object.keys(TRACKERS).map((key) => ({
 
 const lastEntries = reactive({})
 
+// Sleep is tracked on the server (not this device's local storage) precisely
+// so a session started on one caregiver's phone shows as "asleep now" on the
+// other's — see lastEntries.sleeps, kept fresh by loadLastEntries below.
+const activeSleep = computed(() => {
+  const entry = lastEntries.sleeps
+  return entry && !entry.ended_at ? entry : null
+})
+
 const activeTracker = computed(() => trackers.find((t) => t.key === activeSheet.value))
 
 // Ticks every second so active-session tiles show a live-updating elapsed time.
@@ -50,6 +57,8 @@ onMounted(() => {
 })
 onUnmounted(() => {
   if (tickInterval) clearInterval(tickInterval)
+  if (lastEntriesInterval) clearInterval(lastEntriesInterval)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 
 function relativeTime(iso) {
@@ -109,7 +118,6 @@ function subCaption(tracker) {
 
 async function refreshState() {
   activeFeeding.value = await getSetting('active_feeding')
-  activeSleep.value = await getSetting('active_sleep')
   reminderSettings.value = await getReminderSettings()
 }
 
@@ -123,10 +131,22 @@ async function loadLastEntries() {
   )
 }
 
+// Another caregiver's new entry (or a sleep they just started/ended) only
+// reaches this device through a refetch — without one, a "father"'s screen
+// can keep showing a stale overdue alert (or a stale sleep timer) for
+// something the "mother" already logged. Re-check periodically and whenever
+// the app is brought back to the foreground, not just on first load.
+let lastEntriesInterval = null
+function handleVisibilityChange() {
+  if (document.visibilityState === 'visible') loadLastEntries()
+}
+
 onMounted(async () => {
   await babyStore.load()
   await refreshState()
   await loadLastEntries()
+  lastEntriesInterval = setInterval(loadLastEntries, 120_000)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
 })
 
 function openSheet(key) {
@@ -135,9 +155,12 @@ function openSheet(key) {
 
 async function closeSheet() {
   activeSheet.value = null
-  // Starting a feed/sleep is a local-only action (no 'saved' event), so the
-  // live-tile state needs a refresh here too, not just after a full save.
+  // Starting/ending a feed or sleep doesn't always fire a 'saved' event
+  // (e.g. starting is a bare state change), so both refreshes are needed
+  // here too, not just after a full save — sleep's live state in particular
+  // lives in lastEntries now, not local storage.
   await refreshState()
+  await loadLastEntries()
 }
 
 async function onSaved(result) {
