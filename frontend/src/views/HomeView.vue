@@ -126,7 +126,15 @@ async function loadLastEntries() {
   await Promise.allSettled(
     trackers.map(async (t) => {
       const { data } = await apiClient.get(`/api/babies/${babyStore.currentBabyId}/${t.key}`)
-      if (data.data?.[0]) lastEntries[t.key] = data.data[0]
+      const rows = data.data ?? []
+      if (rows.length === 0) return
+
+      // Sleep can have an open (still-asleep) session that was logged
+      // backdated — e.g. "fell asleep an hour ago, still sleeping" — which
+      // may not be the most recent row by started_at if something else was
+      // logged more recently. Always prefer the open session so the live
+      // indicator doesn't miss it; otherwise fall back to the newest row.
+      lastEntries[t.key] = (t.key === 'sleeps' && rows.find((r) => !r.ended_at)) || rows[0]
     })
   )
 }

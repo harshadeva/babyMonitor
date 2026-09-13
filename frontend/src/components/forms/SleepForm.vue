@@ -15,7 +15,7 @@ const props = defineProps({
 const emit = defineEmits(['saved'])
 const isEditing = !!props.record
 
-const { submit, isSubmitting } = useEntryLogger('sleeps')
+const { submit } = useEntryLogger('sleeps')
 const { saveEdit, isSaving } = useEntryEditor('sleeps')
 
 // active.id is set once the server knows about the session — from then on,
@@ -33,6 +33,7 @@ const loggingPast = ref(false)
 const pastStart = ref(new Date(Date.now() - 60 * 60_000))
 const pastEnd = ref(new Date())
 const stillAsleep = ref(false)
+const isLoggingPast = ref(false)
 
 // Edit mode only: editing an already-logged sleep directly, rather than
 // through the live start/end flow below (which is for new sleeps).
@@ -98,7 +99,7 @@ async function beginSleep(startedAtIso) {
     })
     active.value = data.data
     await setSetting('active_sleep', null)
-    return
+    return { synced: true, data: data.data }
   } catch {
     // offline, or unreachable — fall back below
   }
@@ -106,6 +107,7 @@ async function beginSleep(startedAtIso) {
   const session = { started_at: startedAtIso }
   await setSetting('active_sleep', session)
   active.value = session
+  return { synced: false, queued: true, data: session }
 }
 
 async function startSleep() {
@@ -161,23 +163,32 @@ function openLogPast() {
 }
 
 async function logPastSleep() {
-  if (stillAsleep.value) {
-    // Fell asleep at a known past time but hasn't woken up yet — opens the
-    // same server-tracked session the live "Start sleep" flow uses, just
-    // backdated, so it's visible to other caregivers too.
-    await beginSleep(pastStart.value.toISOString())
-    endTime.value = new Date()
-    loggingPast.value = false
-    return
-  }
+  if (isLoggingPast.value) return
+  isLoggingPast.value = true
+  try {
+    if (stillAsleep.value) {
+      // Fell asleep at a known past time but hasn't woken up yet — opens the
+      // same server-tracked session the live "Start sleep" flow uses, just
+      // backdated, so it's visible to other caregivers too. Unlike tapping
+      // "Start sleep now", this closes the sheet straight away instead of
+      // dropping into the "end sleep" screen — the caregiver is recording
+      // something from memory, not sitting there watching it run.
+      const result = await beginSleep(pastStart.value.toISOString())
+      loggingPast.value = false
+      emit('saved', result)
+      return
+    }
 
-  const result = await submit(props.babyId, {
-    started_at: pastStart.value.toISOString(),
-    ended_at: pastEnd.value.toISOString(),
-    notes: notes.value || null,
-  })
-  loggingPast.value = false
-  emit('saved', result)
+    const result = await submit(props.babyId, {
+      started_at: pastStart.value.toISOString(),
+      ended_at: pastEnd.value.toISOString(),
+      notes: notes.value || null,
+    })
+    loggingPast.value = false
+    emit('saved', result)
+  } finally {
+    isLoggingPast.value = false
+  }
 }
 </script>
 
@@ -239,8 +250,8 @@ async function logPastSleep() {
 
       <RemarkField v-if="!stillAsleep" v-model="notes" />
 
-      <button class="btn btn-primary btn-block" style="margin-bottom: 10px;" :disabled="isSubmitting" @click="logPastSleep">
-        {{ isSubmitting ? 'Saving…' : stillAsleep ? 'Save (still sleeping)' : 'Save sleep' }}
+      <button class="btn btn-primary btn-block" style="margin-bottom: 10px;" :disabled="isLoggingPast" @click="logPastSleep">
+        {{ isLoggingPast ? 'Saving…' : stillAsleep ? 'Save (still sleeping)' : 'Save sleep' }}
       </button>
       <button class="btn btn-secondary btn-block" @click="loggingPast = false">Back</button>
     </template>
