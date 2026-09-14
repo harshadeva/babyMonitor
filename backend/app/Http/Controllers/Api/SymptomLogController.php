@@ -16,7 +16,7 @@ class SymptomLogController extends BabyScopedApiController
         $this->ensureOwnsBaby($request, $baby);
 
         return SymptomLogResource::collection(
-            $baby->symptomLogs()->with('creator')->orderByDesc('occurred_at')->paginate(50)
+            $baby->symptomLogs()->with('creator')->orderByDesc('occurred_at')->paginate($this->perPage($request))
         );
     }
 

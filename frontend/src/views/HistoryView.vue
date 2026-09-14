@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import BottomSheet from '@/components/BottomSheet.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import HistoryDetailModal from '@/components/HistoryDetailModal.vue'
@@ -24,6 +25,7 @@ const FORM_COMPONENTS = {
   symptoms: SymptomForm,
 }
 
+const route = useRoute()
 const babyStore = useBabyStore()
 const loading = ref(true)
 const items = ref([])
@@ -32,8 +34,17 @@ const selectedItem = ref(null)
 const editingItem = ref(null)
 const toast = ref(null)
 
-// All types shown by default; tapping a chip narrows the list down to it.
-const filters = reactive(Object.fromEntries(Object.keys(TRACKERS).map((k) => [k, true])))
+// All types shown by default; tapping a chip narrows the list down to it. A
+// chart's "View records" link can arrive with ?entity=feedings,diapers to
+// preset which ones are active instead of showing everything.
+const requestedEntities = String(route.query.entity || '')
+  .split(',')
+  .filter((k) => k in TRACKERS)
+const filters = reactive(
+  Object.fromEntries(
+    Object.keys(TRACKERS).map((k) => [k, requestedEntities.length ? requestedEntities.includes(k) : true])
+  )
+)
 const allFiltersActive = computed(() => Object.values(filters).every(Boolean))
 
 function toggleFilter(entity) {

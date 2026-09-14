@@ -37,7 +37,7 @@ class DiaperChangeController extends BabyScopedApiController
             $query->where('occurred_at', '<=', $request->date('to'));
         }
 
-        return DiaperChangeResource::collection($query->paginate(50));
+        return DiaperChangeResource::collection($query->paginate($this->perPage($request)));
     }
 
     public function store(StoreDiaperChangeRequest $request, Baby $baby)

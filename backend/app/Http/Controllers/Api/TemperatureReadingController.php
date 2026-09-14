@@ -27,7 +27,7 @@ class TemperatureReadingController extends BabyScopedApiController
             $query->where('measured_at', '<=', $request->date('to'));
         }
 
-        return TemperatureReadingResource::collection($query->paginate(50));
+        return TemperatureReadingResource::collection($query->paginate($this->perPage($request)));
     }
 
     public function store(StoreTemperatureReadingRequest $request, Baby $baby)

@@ -16,7 +16,7 @@ class MedicationDoseController extends BabyScopedApiController
         $this->ensureOwnsBaby($request, $baby);
 
         return MedicationDoseResource::collection(
-            $baby->medicationDoses()->with('creator')->orderByDesc('given_at')->paginate(50)
+            $baby->medicationDoses()->with('creator')->orderByDesc('given_at')->paginate($this->perPage($request))
         );
     }
 

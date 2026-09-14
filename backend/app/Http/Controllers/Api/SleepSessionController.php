@@ -24,7 +24,7 @@ class SleepSessionController extends BabyScopedApiController
             $query->where('started_at', '<=', $request->date('to'));
         }
 
-        return SleepSessionResource::collection($query->paginate(50));
+        return SleepSessionResource::collection($query->paginate($this->perPage($request)));
     }
 
     public function store(StoreSleepSessionRequest $request, Baby $baby)

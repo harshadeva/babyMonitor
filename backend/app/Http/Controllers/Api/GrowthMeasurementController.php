@@ -15,9 +15,16 @@ class GrowthMeasurementController extends BabyScopedApiController
     {
         $this->ensureOwnsBaby($request, $baby);
 
-        return GrowthMeasurementResource::collection(
-            $baby->growthMeasurements()->with('creator')->orderByDesc('measured_at')->paginate(50)
-        );
+        $query = $baby->growthMeasurements()->with('creator')->orderByDesc('measured_at');
+
+        if ($request->filled('from')) {
+            $query->where('measured_at', '>=', $request->date('from'));
+        }
+        if ($request->filled('to')) {
+            $query->where('measured_at', '<=', $request->date('to'));
+        }
+
+        return GrowthMeasurementResource::collection($query->paginate($this->perPage($request)));
     }
 
     public function store(StoreGrowthMeasurementRequest $request, Baby $baby)

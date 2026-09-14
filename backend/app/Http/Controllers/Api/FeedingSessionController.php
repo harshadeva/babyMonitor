@@ -24,7 +24,7 @@ class FeedingSessionController extends BabyScopedApiController
             $query->where('started_at', '<=', $request->date('to'));
         }
 
-        return FeedingSessionResource::collection($query->paginate(50));
+        return FeedingSessionResource::collection($query->paginate($this->perPage($request)));
     }
 
     public function store(StoreFeedingSessionRequest $request, Baby $baby)

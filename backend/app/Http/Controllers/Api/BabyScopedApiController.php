@@ -40,4 +40,14 @@ abstract class BabyScopedApiController extends Controller
             ->orderByRaw('ABS(EXTRACT(EPOCH FROM ('.$timeColumn.' - ?)))', [$at])
             ->first();
     }
+
+    /**
+     * Page size for index() listings — callers like the charts page need far
+     * more than the History page's default 50 to cover a wide date range
+     * without silently truncating to the newest 50 rows.
+     */
+    protected function perPage(Request $request): int
+    {
+        return min(max($request->integer('per_page', 50), 1), 2000);
+    }
 }
