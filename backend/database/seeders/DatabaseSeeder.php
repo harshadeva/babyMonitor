@@ -58,6 +58,23 @@ class DatabaseSeeder extends Seeder
             ]
         );
         $testBaby->users()->syncWithoutDetaching([$testUser->id]);
+
+        $thirdUser = $this->seedUser(
+            email: env('SEED_THIRD_USER_EMAIL', 'poorni@gmail.com'),
+            password: env('SEED_THIRD_USER_PASSWORD', '123456'),
+            name: 'Poorni Uththara',
+        );
+
+        //poo
+        $thirdBaby = Baby::firstOrCreate(
+            ['user_id' => $thirdUser->id],
+            [
+                'name' => env('SEED_BABY_NAME', 'Baby'),
+                'birth_date' => env('SEED_BABY_BIRTH_DATE', now()->toDateString()),
+                'sex' => 'unspecified',
+            ]
+        );
+        $thirdBaby->users()->syncWithoutDetaching([$thirdUser->id]);
     }
 
     private function seedUser(string $email, string $password, string $name): User
