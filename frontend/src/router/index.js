@@ -7,6 +7,7 @@ const routes = [
   { path: '/history', name: 'history', component: () => import('@/views/HistoryView.vue') },
   { path: '/charts', name: 'charts', component: () => import('@/views/ChartsView.vue') },
   { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
+  { path: '/account', name: 'account', component: () => import('@/views/AccountView.vue') },
 ]
 
 export const router = createRouter({

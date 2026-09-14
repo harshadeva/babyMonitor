@@ -37,3 +37,19 @@ export const SYMPTOM_TAGS = [
 ]
 
 export const COMMON_MEDICATIONS = ['Vitamin D drops', 'Paracetamol/Acetaminophen', 'Gripe water']
+
+export const COMMON_MILESTONES = [
+  'First smile',
+  'Held head up',
+  'Cord stump fell off',
+  'First laugh',
+  'Rolled over',
+  'First tooth',
+  'Sat up unassisted',
+  'Said "mama"',
+  'Said "dada"',
+  'First word',
+  'Crawled',
+  'Pulled to stand',
+  'First steps',
+]

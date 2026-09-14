@@ -11,6 +11,7 @@ import TemperatureForm from '@/components/forms/TemperatureForm.vue'
 import GrowthForm from '@/components/forms/GrowthForm.vue'
 import MedicationForm from '@/components/forms/MedicationForm.vue'
 import SymptomForm from '@/components/forms/SymptomForm.vue'
+import MilestoneForm from '@/components/forms/MilestoneForm.vue'
 import { apiClient } from '@/api/client'
 import { useBabyStore } from '@/stores/baby'
 import { TRACKERS } from '@/constants/trackers'
@@ -23,6 +24,7 @@ const FORM_COMPONENTS = {
   growths: GrowthForm,
   medications: MedicationForm,
   symptoms: SymptomForm,
+  milestones: MilestoneForm,
 }
 
 const route = useRoute()
@@ -112,6 +114,8 @@ function summarize(entity, entry) {
       return `${entry.name}${entry.dose ? ` · ${entry.dose}` : ''}`
     case 'symptoms':
       return entry.tag.replace('_', ' ')
+    case 'milestones':
+      return entry.title
     default:
       return ''
   }

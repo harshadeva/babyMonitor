@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { apiClient } from '@/api/client'
+import { apiClient, ensureCsrfCookie } from '@/api/client'
 
 export const useBabyStore = defineStore('baby', {
   state: () => ({
@@ -18,6 +18,13 @@ export const useBabyStore = defineStore('baby', {
         this.currentBabyId = this.babies[0].id
       }
       this.loaded = true
+    },
+    async updateBaby(payload) {
+      await ensureCsrfCookie()
+      const { data } = await apiClient.patch(`/api/babies/${this.currentBabyId}`, payload)
+      const idx = this.babies.findIndex((b) => b.id === this.currentBabyId)
+      if (idx !== -1) this.babies[idx] = data.data
+      return data.data
     },
   },
 })

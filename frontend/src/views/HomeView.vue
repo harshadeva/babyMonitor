@@ -8,6 +8,7 @@ import TemperatureForm from '@/components/forms/TemperatureForm.vue'
 import GrowthForm from '@/components/forms/GrowthForm.vue'
 import MedicationForm from '@/components/forms/MedicationForm.vue'
 import SymptomForm from '@/components/forms/SymptomForm.vue'
+import MilestoneForm from '@/components/forms/MilestoneForm.vue'
 import { apiClient } from '@/api/client'
 import { useBabyStore } from '@/stores/baby'
 import { getSetting, getReminderSettings } from '@/offline/db'
@@ -27,6 +28,7 @@ const FORM_COMPONENTS = {
   growths: GrowthForm,
   medications: MedicationForm,
   symptoms: SymptomForm,
+  milestones: MilestoneForm,
 }
 
 const trackers = Object.keys(TRACKERS).map((key) => ({

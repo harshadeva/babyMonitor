@@ -9,4 +9,7 @@ export const TRACKERS = {
   growths: { label: 'Growth', emoji: '📏', color: '#8fc1e8', time: 'measured_at' },
   medications: { label: 'Medicine', emoji: '💊', color: '#ffd976', time: 'given_at' },
   symptoms: { label: 'Symptom', emoji: '📝', color: '#c9a8d4', time: 'occurred_at' },
+  // Irregular, one-off events — doesn't make sense on a "remind me every N
+  // hours" cadence, so it opts out of the Settings reminders list.
+  milestones: { label: 'Milestone', emoji: '🌟', color: '#f5a623', time: 'occurred_at', remindable: false },
 }

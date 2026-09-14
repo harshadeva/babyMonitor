@@ -73,4 +73,9 @@ class Baby extends Model
     {
         return $this->hasMany(SymptomLog::class);
     }
+
+    public function milestones(): HasMany
+    {
+        return $this->hasMany(Milestone::class);
+    }
 }

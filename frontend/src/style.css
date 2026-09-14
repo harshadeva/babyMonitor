@@ -1122,3 +1122,44 @@ input, select, textarea {
 .chart-section-title:first-child {
   margin-top: 0;
 }
+
+.chart-expand-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.form-message {
+  font-size: 13px;
+  margin: -6px 0 12px;
+}
+
+.form-message.success {
+  color: var(--color-success);
+}
+
+.form-message.error {
+  color: var(--color-danger);
+}
+
+.settings-link-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  font-family: var(--font-family);
+}
+
+.settings-link-row .chevron {
+  margin-left: auto;
+  color: var(--color-text-muted);
+  font-size: 18px;
+}

@@ -77,6 +77,8 @@ const detailRows = computed(() => {
       return [{ label: 'Medication', value: r.name }, ...(r.dose ? [{ label: 'Dose', value: r.dose }] : [])]
     case 'symptoms':
       return [{ label: 'Symptom', value: r.tag.replace('_', ' ') }]
+    case 'milestones':
+      return [{ label: 'Milestone', value: r.title }]
     default:
       return []
   }

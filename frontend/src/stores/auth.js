@@ -29,5 +29,15 @@ export const useAuthStore = defineStore('auth', {
         this.checked = true
       }
     },
+    async updateProfile(payload) {
+      await ensureCsrfCookie()
+      const { data } = await apiClient.patch('/api/user', payload)
+      this.user = data.data
+      return data.data
+    },
+    async updatePassword(payload) {
+      await ensureCsrfCookie()
+      await apiClient.patch('/api/user/password', payload)
+    },
   },
 })
