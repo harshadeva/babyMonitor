@@ -45,6 +45,9 @@ export default defineConfig({
       usePolling: true,
       interval: 300,
     },
+    allowedHosts: process.env.FRONTEND_ALLOWED_HOST
+      ? [process.env.FRONTEND_ALLOWED_HOST]
+      : [],
   },
   resolve: {
     alias: {
