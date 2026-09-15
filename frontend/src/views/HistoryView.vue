@@ -138,7 +138,9 @@ function fmtClock(iso) {
 function timeLabel(item) {
   if (item.entity === 'feedings' || item.entity === 'sleeps') {
     const start = fmtClock(item.raw.started_at)
-    return item.raw.ended_at ? `${start} – ${fmtClock(item.raw.ended_at)}` : start
+    if (!item.raw.ended_at) return start
+    const end = fmtClock(item.raw.ended_at)
+    return end === start ? start : `${start} – ${end}`
   }
   return fmtClock(item.at)
 }
