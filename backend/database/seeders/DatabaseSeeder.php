@@ -61,7 +61,7 @@ class DatabaseSeeder extends Seeder
 
         $thirdUser = $this->seedUser(
             email: env('SEED_THIRD_USER_EMAIL', 'poorni@gmail.com'),
-            password: env('SEED_THIRD_USER_PASSWORD', '123456'),
+            password: env('SEED_THIRD_USER_PASSWORD', 'poorni@12'),
             name: 'Poorni Uththara',
         );
 
