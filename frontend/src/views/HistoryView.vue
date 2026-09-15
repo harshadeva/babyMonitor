@@ -100,7 +100,9 @@ function summarize(entity, entry) {
       const parts = []
       if (entry.wet) parts.push('wet')
       if (entry.dirty) parts.push(`dirty${entry.stool_color_name ? ` (${entry.stool_color_name})` : ''}`)
-      return parts.join(' + ') || '—'
+      const status = parts.join(' + ') || '—'
+      const product = entry.product === 'disposable' ? 'Disposable' : 'Cloth'
+      return `${status} (${product})`
     }
     case 'temperatures':
       return `${Number(entry.value_celsius).toFixed(1)}°C · ${entry.method}`
@@ -125,6 +127,20 @@ function durationLabel(start, end) {
   const min = Math.round((new Date(end) - new Date(start)) / 60_000)
   if (min < 60) return `${min} min`
   return `${Math.floor(min / 60)}h ${min % 60}m`
+}
+
+function fmtClock(iso) {
+  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+// Feed/sleep have a start and (usually) an end — show both so the list
+// doesn't hide when a session actually finished.
+function timeLabel(item) {
+  if (item.entity === 'feedings' || item.entity === 'sleeps') {
+    const start = fmtClock(item.raw.started_at)
+    return item.raw.ended_at ? `${start} – ${fmtClock(item.raw.ended_at)}` : start
+  }
+  return fmtClock(item.at)
 }
 
 async function load() {
@@ -251,7 +267,7 @@ const isOnline = computed(() => navigator.onLine)
               <div class="history-row-summary">{{ item.summary }}</div>
             </div>
             <div class="history-row-meta">
-              <div class="history-row-time">{{ new Date(item.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</div>
+              <div class="history-row-time">{{ timeLabel(item) }}</div>
               <button type="button" class="history-delete-btn" aria-label="Delete entry" @click.stop="askDelete(item)">🗑️</button>
             </div>
           </div>
