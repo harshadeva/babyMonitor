@@ -60,9 +60,12 @@ async function refreshActive() {
   try {
     if (navigator.onLine) {
       const { data } = await apiClient.get(`/api/babies/${props.babyId}/sleeps`)
-      const latest = data.data?.[0]
-      if (latest && !latest.ended_at) {
-        active.value = latest
+      // A backdated "still asleep" entry can have an earlier started_at than
+      // a since-completed sleep, so it isn't necessarily the top of the
+      // started_at-DESC list — search for the open one rather than assuming.
+      const open = data.data?.find((r) => !r.ended_at)
+      if (open) {
+        active.value = open
         endTime.value = new Date()
         return
       }

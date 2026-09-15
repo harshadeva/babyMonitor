@@ -32,6 +32,18 @@ class FeedingSessionController extends BabyScopedApiController
         $this->ensureOwnsBaby($request, $baby);
 
         $data = $request->validated();
+
+        // Starting a breastfeed (no ended_at yet) is how caregivers signal
+        // "feeding now" to each other, same as sleep. If one is already open,
+        // hand that back instead of opening a second one — e.g. a caregiver's
+        // screen was stale and didn't know the other had already started it.
+        if (empty($data['ended_at'])) {
+            $activeSession = $baby->feedingSessions()->whereNull('ended_at')->with('creator')->first();
+            if ($activeSession) {
+                return new FeedingSessionResource($activeSession);
+            }
+        }
+
         $data['created_by'] = $request->user()->id;
 
         $duplicate = $this->findPossibleDuplicate(

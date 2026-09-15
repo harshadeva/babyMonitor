@@ -11,13 +11,12 @@ import SymptomForm from '@/components/forms/SymptomForm.vue'
 import MilestoneForm from '@/components/forms/MilestoneForm.vue'
 import { apiClient } from '@/api/client'
 import { useBabyStore } from '@/stores/baby'
-import { getSetting, getReminderSettings } from '@/offline/db'
+import { getReminderSettings } from '@/offline/db'
 import { TRACKERS } from '@/constants/trackers'
 
 const babyStore = useBabyStore()
 const activeSheet = ref(null)
 const toast = ref(null)
-const activeFeeding = ref(null)
 const reminderSettings = ref({})
 
 const FORM_COMPONENTS = {
@@ -39,11 +38,17 @@ const trackers = Object.keys(TRACKERS).map((key) => ({
 
 const lastEntries = reactive({})
 
-// Sleep is tracked on the server (not this device's local storage) precisely
-// so a session started on one caregiver's phone shows as "asleep now" on the
-// other's — see lastEntries.sleeps, kept fresh by loadLastEntries below.
+// Sleep and (breastfeed) feeding are tracked on the server (not this
+// device's local storage) precisely so a session started on one caregiver's
+// phone shows as live on the other's — see lastEntries.sleeps/feedings, kept
+// fresh by loadLastEntries below.
 const activeSleep = computed(() => {
   const entry = lastEntries.sleeps
+  return entry && !entry.ended_at ? entry : null
+})
+
+const activeFeeding = computed(() => {
+  const entry = lastEntries.feedings
   return entry && !entry.ended_at ? entry : null
 })
 
@@ -119,9 +124,15 @@ function subCaption(tracker) {
 }
 
 async function refreshState() {
-  activeFeeding.value = await getSetting('active_feeding')
   reminderSettings.value = await getReminderSettings()
 }
+
+// Sleep and feeding sessions can have an open (still-ongoing) record that
+// was logged backdated — e.g. "started an hour ago, still going" — which may
+// not be the most recent row by started_at if something else was logged more
+// recently. Always prefer the open session so the live indicator doesn't
+// miss it; otherwise fall back to the newest row.
+const OPEN_SESSION_TRACKERS = ['sleeps', 'feedings']
 
 async function loadLastEntries() {
   if (!babyStore.currentBabyId || !navigator.onLine) return
@@ -131,12 +142,7 @@ async function loadLastEntries() {
       const rows = data.data ?? []
       if (rows.length === 0) return
 
-      // Sleep can have an open (still-asleep) session that was logged
-      // backdated — e.g. "fell asleep an hour ago, still sleeping" — which
-      // may not be the most recent row by started_at if something else was
-      // logged more recently. Always prefer the open session so the live
-      // indicator doesn't miss it; otherwise fall back to the newest row.
-      lastEntries[t.key] = (t.key === 'sleeps' && rows.find((r) => !r.ended_at)) || rows[0]
+      lastEntries[t.key] = (OPEN_SESSION_TRACKERS.includes(t.key) && rows.find((r) => !r.ended_at)) || rows[0]
     })
   )
 }
@@ -167,8 +173,8 @@ async function closeSheet() {
   activeSheet.value = null
   // Starting/ending a feed or sleep doesn't always fire a 'saved' event
   // (e.g. starting is a bare state change), so both refreshes are needed
-  // here too, not just after a full save — sleep's live state in particular
-  // lives in lastEntries now, not local storage.
+  // here too, not just after a full save — their live state lives in
+  // lastEntries now, not local storage.
   await refreshState()
   await loadLastEntries()
 }
